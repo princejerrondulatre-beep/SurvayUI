@@ -1,0 +1,491 @@
+-- Survay: The Ultimate UI Library
+-- Version 1.0 - 2025
+-- Developed by [Your Name]
+
+local Survay = {}
+Survay.Gui = Instance.new("ScreenGui")
+Survay.Gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+Survay.Gui.Name = "SurvayGui"
+
+-- Theme System (10 Base Themes)
+local Themes = {
+    Dark = {
+        Main = Color3.fromRGB(30, 30, 30),
+        Secondary = Color3.fromRGB(40, 40, 40),
+        Accent = Color3.fromRGB(70, 130, 180),
+        Text = Color3.new(1,1,1)
+    },
+    Light = {
+        Main = Color3.fromRGB(240, 240, 240),
+        Secondary = Color3.fromRGB(200, 200, 200),
+        Accent = Color3.fromRGB(70, 130, 180),
+        Text = Color3.new(0,0,0)
+    },
+    Synapse = {
+        Main = Color3.fromRGB(47, 49, 54),
+        Secondary = Color3.fromRGB(54, 57, 62),
+        Accent = Color3.fromRGB(160, 224, 192),
+        Text = Color3.new(1,1,1)
+    },
+    Rayfield = {
+        Main = Color3.fromRGB(28, 28, 28),
+        Secondary = Color3.fromRGB(35, 35, 35),
+        Accent = Color3.fromRGB(100, 250, 212),
+        Text = Color3.new(1,1,1)
+    },
+    Purple = {
+        Main = Color3.fromRGB(52, 44, 73),
+        Secondary = Color3.fromRGB(63, 53, 87),
+        Accent = Color3.fromRGB(170, 129, 219),
+        Text = Color3.new(1,1,1)
+    },
+    Green = {
+        Main = Color3.fromRGB(46, 60, 41),
+        Secondary = Color3.fromRGB(54, 71, 49),
+        Accent = Color3.fromRGB(152, 231, 69),
+        Text = Color3.new(1,1,1)
+    },
+    Orange = {
+        Main = Color3.fromRGB(86, 43, 24),
+        Secondary = Color3.fromRGB(103, 52, 29),
+        Accent = Color3.fromRGB(255, 165, 0),
+        Text = Color3.new(1,1,1)
+    },
+    Blue = {
+        Main = Color3.fromRGB(25, 66, 95),
+        Secondary = Color3.fromRGB(30, 79, 114),
+        Accent = Color3.fromRGB(30, 144, 255),
+        Text = Color3.new(1,1,1)
+    },
+    Neon = {
+        Main = Color3.fromRGB(10, 10, 20),
+        Secondary = Color3.fromRGB(15, 15, 30),
+        Accent = Color3.fromRGB(0, 255, 255),
+        Text = Color3.new(1,1,1)
+    },
+    Custom = {
+        Main = Color3.fromRGB(0, 0, 0),
+        Secondary = Color3.fromRGB(0, 0, 0),
+        Accent = Color3.fromRGB(0, 0, 0),
+        Text = Color3.new(1,1,1)
+    }
+}
+
+-- Base Window
+function Survay:CreateWindow(config)
+    config = config or {}
+    
+    local Window = Instance.new("ScreenGui")
+    local Main = Instance.new("Frame")
+    local TopBar = Instance.new("Frame")
+    local Title = Instance.new("TextLabel")
+    local Minimize = Instance.new("TextButton")
+    local Close = Instance.new("TextButton")
+    local SectionsContainer = Instance.new("ScrollingFrame")
+    local UIListLayout = Instance.new("UIListLayout")
+    
+    -- Main Window Setup
+    Window.Parent = self.Gui
+    Main.Size = UDim2.new(0.5, 0, 0.75, 0)
+    Main.Position = UDim2.new(0.25, 0, 0.125, 0)
+    Main.BackgroundTransparency = 0
+    Main.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
+    
+    -- Top Bar
+    TopBar.Size = UDim2.new(1, 0, 30, 0)
+    TopBar.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+    TopBar.Parent = Main
+    
+    Title.Size = UDim2.new(1, -100, 1, 0)
+    Title.Text = config.Name or "Survay"
+    Title.Font = Enum.Font.GothamBold
+    Title.TextSize = 16
+    Title.TextColor3 = Themes[config.Theme or "Dark"].Text
+    Title.BackgroundTransparency = 1
+    Title.Parent = TopBar
+    
+    Minimize.Size = UDim2.new(0, 30, 1, 0)
+    Minimize.Text = "-"
+    Minimize.Font = Enum.Font.GothamBold
+    Minimize.TextColor3 = Themes[config.Theme or "Dark"].Text
+    Minimize.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
+    Minimize.Parent = TopBar
+    Minimize.MouseButton1Click:Connect(function()
+        Main:TweenSize(UDim2.new(0.5, 0, 0.1, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Quad, 0.2)
+    end)
+    
+    Close.Size = UDim2.new(0, 30, 1, 0)
+    Close.Text = "X"
+    Close.Font = Enum.Font.GothamBold
+    Close.TextColor3 = Themes[config.Theme or "Dark"].Text
+    Close.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
+    Close.Parent = TopBar
+    Close.MouseButton1Click:Connect(function()
+        Main:Destroy()
+    end)
+    
+    SectionsContainer.Size = UDim2.new(1, 0, 1, -30)
+    SectionsContainer.Position = UDim2.new(0, 0, 0, 30)
+    SectionsContainer.BackgroundColorTransparency = 1
+    SectionsContainer.Parent = Main
+    
+    UIListLayout.Padding = UDim.new(0, 10)
+    UIListLayout.Parent = SectionsContainer
+    
+    return {
+        AddSection = function(self, name)
+            local Section = Instance.new("Frame")
+            local SectionTitle = Instance.new("TextLabel")
+            local Content = Instance.new("Frame")
+            local UIList = Instance.new("UIListLayout")
+            
+            Section.Size = UDim2.new(1, 0, 40, 0)
+            Section.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+            Section.Parent = SectionsContainer
+            
+            SectionTitle.Size = UDim2.new(1, 0, 20, 0)
+            SectionTitle.Text = name
+            SectionTitle.Font = Enum.Font.GothamBold
+            SectionTitle.TextSize = 14
+            SectionTitle.TextColor3 = Themes[config.Theme or "Dark"].Text
+            SectionTitle.BackgroundTransparency = 1
+            SectionTitle.Parent = Section
+            
+            Content.Size = UDim2.new(1, 0, 1, -20)
+            Content.Position = UDim2.new(0, 0, 0, 20)
+            Content.BackgroundColorTransparency = 1
+            Content.Parent = Section
+            
+            UIList.SortOrder = Enum.SortOrder.LayoutOrder
+            UIList.Padding = UDim.new(0, 5)
+            UIList.Parent = Content
+            
+            local Elements = {
+                AddSlider = function(self, name, min, max, value, callback)
+                    local Slider = Instance.new("Frame")
+                    local Label = Instance.new("TextLabel")
+                    local Bar = Instance.new("Frame")
+                    local Indicator = Instance.new("Frame")
+                    local Value = Instance.new("TextBox")
+                    
+                    Slider.Size = UDim2.new(1, 0, 30, 0)
+                    Slider.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+                    Slider.Parent = Content
+                    
+                    Label.Size = UDim2.new(0, 150, 1, 0)
+                    Label.Text = name
+                    Label.Font = Enum.Font.Gotham
+                    Label.TextSize = 14
+                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Label.BackgroundTransparency = 1
+                    Label.Parent = Slider
+                    
+                    Bar.Size = UDim2.new(0.8, 0, 6, 0)
+                    Bar.Position = UDim2.new(0.1, 0, 0.7, 0)
+                    Bar.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+                    Bar.Parent = Slider
+                    
+                    Indicator.Size = UDim2.new(0, 10, 1, 0)
+                    Indicator.Position = UDim2.new((value - min)/(max - min), 0, 0, 0)
+                    Indicator.BackgroundColor3 = Themes[config.Theme or "Dark"].Text
+                    Indicator.Parent = Bar
+                    
+                    Value.Size = UDim2.new(0, 50, 1, 0)
+                    Value.Position = UDim2.new(0.9, 0, 0, 0)
+                    Value.Text = value
+                    Value.Font = Enum.Font.GothamSemibold
+                    Value.TextSize = 14
+                    Value.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Value.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+                    Value.TextXAlignment = Enum.TextXAlignment.Center
+                    Value.Parent = Slider
+                    
+                    Slider.MouseButton1Down:Connect(function()
+                        game.Players.LocalPlayer:GetMouse().Update:Connect(function()
+                            local X = game.Players.LocalPlayer:GetMouse().X - Bar.AbsolutePosition.X
+                            local Percent = math.clamp(X/Bar.AbsoluteSize.X, 0, 1)
+                            Indicator:TweenPosition(UDim2.new(Percent, 0, 0, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.1)
+                            local CurrentValue = math.floor(min + (max - min) * Percent)
+                            Value.Text = CurrentValue
+                            if callback then callback(CurrentValue) end
+                        end)
+                    end)
+                end,
+                
+                AddInput = function(self, name, placeholder, callback)
+                    local Input = Instance.new("Frame")
+                    local Label = Instance.new("TextLabel")
+                    local Box = Instance.new("TextBox")
+                    
+                    Input.Size = UDim2.new(1, 0, 30, 0)
+                    Input.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+                    Input.Parent = Content
+                    
+                    Label.Size = UDim2.new(0, 150, 1, 0)
+                    Label.Text = name
+                    Label.Font = Enum.Font.Gotham
+                    Label.TextSize = 14
+                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Label.BackgroundTransparency = 1
+                    Label.Parent = Input
+                    
+                    Box.Size = UDim2.new(0.8, 0, 1, 0)
+                    Box.Position = UDim2.new(0.1, 0, 0, 0)
+                    Box.Text = placeholder
+                    Box.Font = Enum.Font.GothamSemibold
+                    Box.TextSize = 14
+                    Box.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Box.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+                    Box.TextXAlignment = Enum.TextXAlignment.Left
+                    Box.Parent = Input
+                    
+                    Box.FocusLost:Connect(function()
+                        if callback then callback(Box.Text) end
+                    end)
+                end,
+                
+                AddToggle = function(self, name, state, callback)
+                    local Toggle = Instance.new("Frame")
+                    local Label = Instance.new("TextLabel")
+                    local Button = Instance.new("TextButton")
+                    
+                    Toggle.Size = UDim2.new(1, 0, 30, 0)
+                    Toggle.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+                    Toggle.Parent = Content
+                    
+                    Label.Size = UDim2.new(0, 150, 1, 0)
+                    Label.Text = name
+                    Label.Font = Enum.Font.Gotham
+                    Label.TextSize = 14
+                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Label.BackgroundTransparency = 1
+                    Label.Parent = Toggle
+                    
+                    Button.Size = UDim2.new(0.2, 0, 1, 0)
+                    Button.Position = UDim2.new(0.8, 0, 0, 0)
+                    Button.Text = "OFF"
+                    Button.Font = Enum.Font.GothamSemibold
+                    Button.TextSize = 14
+                    Button.TextColor3 = if state then Themes[config.Theme or "Dark"].Text else Themes[config.Theme or "Dark"].Text
+                    Button.BackgroundColor3 = if state then Themes[config.Theme or "Dark"].Accent else Themes[config.Theme or "Dark"].Main
+                    Button.Parent = Toggle
+                    
+                    Button.MouseButton1Click:Connect(function()
+                        state = not state
+                        Button.Text = if state then "ON" else "OFF"
+                        Button.BackgroundColor3 = if state then Themes[config.Theme or "Dark"].Accent else Themes[config.Theme or "Dark"].Main
+                        if callback then callback(state) end
+                    end)
+                end,
+                
+                AddColorPicker = function(self, name, color, callback)
+                    local ColorPicker = Instance.new("TextLabel")
+                    local Label = Instance.new("TextLabel")
+                    local Sample = Instance.new("Frame")
+                    local Button = Instance.new("TextButton")
+                    
+                    ColorPicker.Size = UDim2.new(1, 0, 30, 0)
+                    ColorPicker.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
+                    ColorPicker.Parent = Content
+                    
+                    Label.Size = UDim2.new(0, 150, 1, 0)
+                    Label.Text = name
+                    Label.Font = Enum.Font.Gotham
+                    Label.TextSize = 14
+                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Label.BackgroundTransparency = 1
+                    Label.Parent = ColorPicker
+                    
+                    Sample.Size = UDim2.new(0.2, 0, 1, 0)
+                    Sample.Position = UDim2.new(0.8, 0, 0, 0)
+                    Sample.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
+                    Sample.Parent = ColorPicker
+                    
+                    Button.Size = UDim2.new(0.1, 0, 1, 0)
+                    Button.Position = UDim2.new(0.91, 0, 0, 0)
+                    Button.Text = "..."
+                    Button.Font = Enum.Font.GothamSemibold
+                    Button.TextSize = 14
+                    Button.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Button.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+                    Button.Parent = ColorPicker
+                    
+                    Button.MouseButton1Click:Connect(function()
+                        local c3 = game:GetService("PlayerGui"):FindFirstChild("SurvayColorPicker")
+                        if c3 then
+                            c3:Destroy()
+                            return
+                        end
+                        
+                        local Picker = Instance.new("ScreenGui")
+                        local Main = Instance.new("Frame")
+                        local ColorBlock = Instance.new("Frame")
+                        local Confirm = Instance.new("TextButton")
+                        
+                        Picker.Parent = game.Players.LocalPlayer.PlayerGui
+                        Main.Size = UDim2.new(0.3, 0, 0.3, 0)
+                        Main.Position = UDim2.new(0.35, 0, 0.35, 0)
+                        Main.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
+                        Main.BorderSizePixel = 0
+                        Main.Parent = Picker
+                        
+                        ColorBlock.Size = UDim2.new(1, 0, 0.8, 0)
+                        ColorBlock.Position = UDim2.new(0, 0, 0.1, 0)
+                        ColorBlock.ZIndex = 2
+                        ColorBlock.BackgroundColor3 = Sample.BackgroundColor3
+                        ColorBlock.Parent = Main
+                        
+                        Confirm.Size = UDim2.new(1, 0, 0.1, 0)
+                        Confirm.Position = UDim2.new(0, 0, 0.9, 0)
+                        Confirm.Text = "Select"
+                        Confirm.Font = Enum.Font.GothamSemibold
+                        Confirm.TextSize = 14
+                        Confirm.TextColor3 = Themes[config.Theme or "Dark"].Text
+                        Confirm.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+                        Confirm.Parent = Main
+                        
+                        Confirm.MouseButton1Click:Connect(function()
+                            Sample.BackgroundColor3 = ColorBlock.BackgroundColor3
+                            if callback then callback(Sample.BackgroundColor3) end
+                            Picker:Destroy()
+                        end)
+                    end)
+                end,
+                
+                AddButton = function(self, name, callback)
+                    local Button = Instance.new("TextButton")
+                    
+                    Button.Size = UDim2.new(1, 0, 30, 0)
+                    Button.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
+                    Button.Text = name
+                    Button.Font = Enum.Font.GothamSemibold
+                    Button.TextSize = 14
+                    Button.TextColor3 = Themes[config.Theme or "Dark"].Text
+                    Button.Parent = Content
+                    
+                    Button.MouseButton1Click:Connect(function()
+                        if callback then callback() end
+                    end)
+                end
+            }
+            
+            return Elements
+        end
+    }
+    
+    return Window
+end
+
+-- Key System
+function Survay:ValidateKey(key)
+    local validKeys = {
+        "SURVAY123456789",
+        "DEMOKEY987654321",
+        "FREEUSER000000000"
+    }
+    
+    for _, valid in ipairs(validKeys) do
+        if key == valid then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- Floating Toggle Button
+function Survay:CreateFloatingButton()
+    local Button = Instance.new("TextButton")
+    
+    Button.Size = UDim2.new(0, 60, 0, 60)
+    Button.Position = UDim2.new(1, -60, 1, -60)
+    Button.Text = "+"
+    Button.Font = Enum.Font.GothamBold
+    Button.TextSize = 28
+    Button.TextColor3 = Color3.new(1,1,1)
+    Button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    Button.Parent = self.Gui
+    
+    Button.MouseButton1Click:Connect(function()
+        Button.Text = Button.Text == "+" and "-" or "+"
+        self:ShowExampleWindow()
+    end)
+end
+
+-- Example Window with All Elements
+function Survay:ShowExampleWindow()
+    local Window = self:CreateWindow({
+        Name = "Survay Example",
+        Theme = "Rayfield"
+    })
+    
+    local Section = Window:AddSection("Example Section")
+    
+    Section:AddSlider("Health", 0, 100, 50, function(value)
+        print("Slider Value:", value)
+    end)
+    
+    Section:AddInput("Name", "Enter your name", function(input)
+        print("Entered Name:", input)
+    end)
+    
+    Section:AddToggle("Auto Farm", false, function(state)
+        print("Auto Farm Enabled:", state)
+    end)
+    
+    Section:AddColorPicker("Theme Color", Color3.fromRGB(255, 0, 0), function(color)
+        print("Selected Color:", color)
+    end)
+    
+    Section:AddButton("Toggle Menu", function()
+        self:ToggleMainGUI()
+    end)
+    
+    Window.Close.MouseButton1Click:Connect(function()
+        Window.Main:Destroy()
+    end)
+    
+    return Window
+end
+
+-- Main GUI Management
+Survay.MainVisible = true
+function Survay:ToggleMainGUI()
+    self.MainVisible = not self.MainVisible
+    self.Gui:GetDescendants():for i,v do
+        if v:IsA("ScreenGui") then continue end
+        if v:IsA("TextButton") and v.Text == "X" then
+            v.Parent.Parent:Destroy()
+        end
+    end
+end
+
+-- Example Loader Script
+local function ShowLoader()
+    local Loader = Instance.new("ScreenGui")
+    local Frame = Instance.new("TextLabel")
+    
+    Loader.Parent = game.Players.LocalPlayer.PlayerGui
+    Frame.Size = UDim2.new(0.5, 0, 0.2, 0)
+    Frame.Position = UDim2.new(0.25, 0, 0.4, 0)
+    Frame.BackgroundTransparency = 0
+    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Frame.Text = "Loading Survay\nPlease wait..."
+    Frame.Font = Enum.Font.GothamBold
+    Frame.TextSize = 18
+    Frame.TextColor3 = Color3.white
+    Frame.Parent = Loader
+end
+
+-- Create Floating Button
+Survay:CreateFloatingButton()
+
+-- Default Example Window
+--Survay:ShowExampleWindow()
+
+-- Key Validation (Uncomment to activate)
+--if not Survay:ValidateKey("YOURKEYHERE") then
+--    game:GetService("Players").LocalPlayer:Kick("Invalid key")
+--end
+
+return Survay
