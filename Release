@@ -1,6 +1,6 @@
 -- Survay: The Ultimate UI Library
 -- Version 1.0 - 2025
--- Developed by [Your Name]
+-- Developed by [PrinceJerron]
 
 local Survay = {}
 Survay.Gui = Instance.new("ScreenGui")
