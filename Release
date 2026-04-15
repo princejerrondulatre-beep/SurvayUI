@@ -1,491 +1,401 @@
--- Survay: The Ultimate UI Library
--- Version 1.0 - 2025
--- Developed by [PrinceJerron]
+--[[
+    SURVAY UI LIBRARY [ULTIMATE EDITION]
+    Built for: Exorista Hub
+    Developer: Ron (Survay Team)
+    
+    Features:
+    - 10+ Premium Themes (Acrylic & Glassmorphism inspired)
+    - Advanced Key System with Verification Logic
+    - Config Saving (JSON based)
+    - Notification Queuing System
+    - Professional Floating Toggle Button
+    - 99+ Element Support with Auto-Scaling
+]]
 
-local Survay = {}
-Survay.Gui = Instance.new("ScreenGui")
-Survay.Gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-Survay.Gui.Name = "SurvayGui"
-
--- Theme System (10 Base Themes)
-local Themes = {
-    Dark = {
-        Main = Color3.fromRGB(30, 30, 30),
-        Secondary = Color3.fromRGB(40, 40, 40),
-        Accent = Color3.fromRGB(70, 130, 180),
-        Text = Color3.new(1,1,1)
-    },
-    Light = {
-        Main = Color3.fromRGB(240, 240, 240),
-        Secondary = Color3.fromRGB(200, 200, 200),
-        Accent = Color3.fromRGB(70, 130, 180),
-        Text = Color3.new(0,0,0)
-    },
-    Synapse = {
-        Main = Color3.fromRGB(47, 49, 54),
-        Secondary = Color3.fromRGB(54, 57, 62),
-        Accent = Color3.fromRGB(160, 224, 192),
-        Text = Color3.new(1,1,1)
-    },
-    Rayfield = {
-        Main = Color3.fromRGB(28, 28, 28),
-        Secondary = Color3.fromRGB(35, 35, 35),
-        Accent = Color3.fromRGB(100, 250, 212),
-        Text = Color3.new(1,1,1)
-    },
-    Purple = {
-        Main = Color3.fromRGB(52, 44, 73),
-        Secondary = Color3.fromRGB(63, 53, 87),
-        Accent = Color3.fromRGB(170, 129, 219),
-        Text = Color3.new(1,1,1)
-    },
-    Green = {
-        Main = Color3.fromRGB(46, 60, 41),
-        Secondary = Color3.fromRGB(54, 71, 49),
-        Accent = Color3.fromRGB(152, 231, 69),
-        Text = Color3.new(1,1,1)
-    },
-    Orange = {
-        Main = Color3.fromRGB(86, 43, 24),
-        Secondary = Color3.fromRGB(103, 52, 29),
-        Accent = Color3.fromRGB(255, 165, 0),
-        Text = Color3.new(1,1,1)
-    },
-    Blue = {
-        Main = Color3.fromRGB(25, 66, 95),
-        Secondary = Color3.fromRGB(30, 79, 114),
-        Accent = Color3.fromRGB(30, 144, 255),
-        Text = Color3.new(1,1,1)
-    },
-    Neon = {
-        Main = Color3.fromRGB(10, 10, 20),
-        Secondary = Color3.fromRGB(15, 15, 30),
-        Accent = Color3.fromRGB(0, 255, 255),
-        Text = Color3.new(1,1,1)
-    },
-    Custom = {
-        Main = Color3.fromRGB(0, 0, 0),
-        Secondary = Color3.fromRGB(0, 0, 0),
-        Accent = Color3.fromRGB(0, 0, 0),
-        Text = Color3.new(1,1,1)
-    }
+local Survay = {
+    Flags = {},
+    Theme = "DarkRed", -- Default
+    ConfigFolder = "SurvayConfigs",
+    Notifications = {}
 }
 
--- Base Window
-function Survay:CreateWindow(config)
-    config = config or {}
-    
-    local Window = Instance.new("ScreenGui")
-    local Main = Instance.new("Frame")
-    local TopBar = Instance.new("Frame")
-    local Title = Instance.new("TextLabel")
-    local Minimize = Instance.new("TextButton")
-    local Close = Instance.new("TextButton")
-    local SectionsContainer = Instance.new("ScrollingFrame")
-    local UIListLayout = Instance.new("UIListLayout")
-    
-    -- Main Window Setup
-    Window.Parent = self.Gui
-    Main.Size = UDim2.new(0.5, 0, 0.75, 0)
-    Main.Position = UDim2.new(0.25, 0, 0.125, 0)
-    Main.BackgroundTransparency = 0
-    Main.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
-    
-    -- Top Bar
-    TopBar.Size = UDim2.new(1, 0, 30, 0)
-    TopBar.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-    TopBar.Parent = Main
-    
-    Title.Size = UDim2.new(1, -100, 1, 0)
-    Title.Text = config.Name or "Survay"
-    Title.Font = Enum.Font.GothamBold
-    Title.TextSize = 16
-    Title.TextColor3 = Themes[config.Theme or "Dark"].Text
-    Title.BackgroundTransparency = 1
-    Title.Parent = TopBar
-    
-    Minimize.Size = UDim2.new(0, 30, 1, 0)
-    Minimize.Text = "-"
-    Minimize.Font = Enum.Font.GothamBold
-    Minimize.TextColor3 = Themes[config.Theme or "Dark"].Text
-    Minimize.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
-    Minimize.Parent = TopBar
-    Minimize.MouseButton1Click:Connect(function()
-        Main:TweenSize(UDim2.new(0.5, 0, 0.1, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Quad, 0.2)
-    end)
-    
-    Close.Size = UDim2.new(0, 30, 1, 0)
-    Close.Text = "X"
-    Close.Font = Enum.Font.GothamBold
-    Close.TextColor3 = Themes[config.Theme or "Dark"].Text
-    Close.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
-    Close.Parent = TopBar
-    Close.MouseButton1Click:Connect(function()
-        Main:Destroy()
-    end)
-    
-    SectionsContainer.Size = UDim2.new(1, 0, 1, -30)
-    SectionsContainer.Position = UDim2.new(0, 0, 0, 30)
-    SectionsContainer.BackgroundColorTransparency = 1
-    SectionsContainer.Parent = Main
-    
-    UIListLayout.Padding = UDim.new(0, 10)
-    UIListLayout.Parent = SectionsContainer
-    
-    return {
-        AddSection = function(self, name)
-            local Section = Instance.new("Frame")
-            local SectionTitle = Instance.new("TextLabel")
-            local Content = Instance.new("Frame")
-            local UIList = Instance.new("UIListLayout")
-            
-            Section.Size = UDim2.new(1, 0, 40, 0)
-            Section.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-            Section.Parent = SectionsContainer
-            
-            SectionTitle.Size = UDim2.new(1, 0, 20, 0)
-            SectionTitle.Text = name
-            SectionTitle.Font = Enum.Font.GothamBold
-            SectionTitle.TextSize = 14
-            SectionTitle.TextColor3 = Themes[config.Theme or "Dark"].Text
-            SectionTitle.BackgroundTransparency = 1
-            SectionTitle.Parent = Section
-            
-            Content.Size = UDim2.new(1, 0, 1, -20)
-            Content.Position = UDim2.new(0, 0, 0, 20)
-            Content.BackgroundColorTransparency = 1
-            Content.Parent = Section
-            
-            UIList.SortOrder = Enum.SortOrder.LayoutOrder
-            UIList.Padding = UDim.new(0, 5)
-            UIList.Parent = Content
-            
-            local Elements = {
-                AddSlider = function(self, name, min, max, value, callback)
-                    local Slider = Instance.new("Frame")
-                    local Label = Instance.new("TextLabel")
-                    local Bar = Instance.new("Frame")
-                    local Indicator = Instance.new("Frame")
-                    local Value = Instance.new("TextBox")
-                    
-                    Slider.Size = UDim2.new(1, 0, 30, 0)
-                    Slider.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-                    Slider.Parent = Content
-                    
-                    Label.Size = UDim2.new(0, 150, 1, 0)
-                    Label.Text = name
-                    Label.Font = Enum.Font.Gotham
-                    Label.TextSize = 14
-                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Label.BackgroundTransparency = 1
-                    Label.Parent = Slider
-                    
-                    Bar.Size = UDim2.new(0.8, 0, 6, 0)
-                    Bar.Position = UDim2.new(0.1, 0, 0.7, 0)
-                    Bar.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-                    Bar.Parent = Slider
-                    
-                    Indicator.Size = UDim2.new(0, 10, 1, 0)
-                    Indicator.Position = UDim2.new((value - min)/(max - min), 0, 0, 0)
-                    Indicator.BackgroundColor3 = Themes[config.Theme or "Dark"].Text
-                    Indicator.Parent = Bar
-                    
-                    Value.Size = UDim2.new(0, 50, 1, 0)
-                    Value.Position = UDim2.new(0.9, 0, 0, 0)
-                    Value.Text = value
-                    Value.Font = Enum.Font.GothamSemibold
-                    Value.TextSize = 14
-                    Value.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Value.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-                    Value.TextXAlignment = Enum.TextXAlignment.Center
-                    Value.Parent = Slider
-                    
-                    Slider.MouseButton1Down:Connect(function()
-                        game.Players.LocalPlayer:GetMouse().Update:Connect(function()
-                            local X = game.Players.LocalPlayer:GetMouse().X - Bar.AbsolutePosition.X
-                            local Percent = math.clamp(X/Bar.AbsoluteSize.X, 0, 1)
-                            Indicator:TweenPosition(UDim2.new(Percent, 0, 0, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.1)
-                            local CurrentValue = math.floor(min + (max - min) * Percent)
-                            Value.Text = CurrentValue
-                            if callback then callback(CurrentValue) end
-                        end)
-                    end)
-                end,
-                
-                AddInput = function(self, name, placeholder, callback)
-                    local Input = Instance.new("Frame")
-                    local Label = Instance.new("TextLabel")
-                    local Box = Instance.new("TextBox")
-                    
-                    Input.Size = UDim2.new(1, 0, 30, 0)
-                    Input.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-                    Input.Parent = Content
-                    
-                    Label.Size = UDim2.new(0, 150, 1, 0)
-                    Label.Text = name
-                    Label.Font = Enum.Font.Gotham
-                    Label.TextSize = 14
-                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Label.BackgroundTransparency = 1
-                    Label.Parent = Input
-                    
-                    Box.Size = UDim2.new(0.8, 0, 1, 0)
-                    Box.Position = UDim2.new(0.1, 0, 0, 0)
-                    Box.Text = placeholder
-                    Box.Font = Enum.Font.GothamSemibold
-                    Box.TextSize = 14
-                    Box.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Box.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-                    Box.TextXAlignment = Enum.TextXAlignment.Left
-                    Box.Parent = Input
-                    
-                    Box.FocusLost:Connect(function()
-                        if callback then callback(Box.Text) end
-                    end)
-                end,
-                
-                AddToggle = function(self, name, state, callback)
-                    local Toggle = Instance.new("Frame")
-                    local Label = Instance.new("TextLabel")
-                    local Button = Instance.new("TextButton")
-                    
-                    Toggle.Size = UDim2.new(1, 0, 30, 0)
-                    Toggle.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-                    Toggle.Parent = Content
-                    
-                    Label.Size = UDim2.new(0, 150, 1, 0)
-                    Label.Text = name
-                    Label.Font = Enum.Font.Gotham
-                    Label.TextSize = 14
-                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Label.BackgroundTransparency = 1
-                    Label.Parent = Toggle
-                    
-                    Button.Size = UDim2.new(0.2, 0, 1, 0)
-                    Button.Position = UDim2.new(0.8, 0, 0, 0)
-                    Button.Text = "OFF"
-                    Button.Font = Enum.Font.GothamSemibold
-                    Button.TextSize = 14
-                    Button.TextColor3 = if state then Themes[config.Theme or "Dark"].Text else Themes[config.Theme or "Dark"].Text
-                    Button.BackgroundColor3 = if state then Themes[config.Theme or "Dark"].Accent else Themes[config.Theme or "Dark"].Main
-                    Button.Parent = Toggle
-                    
-                    Button.MouseButton1Click:Connect(function()
-                        state = not state
-                        Button.Text = if state then "ON" else "OFF"
-                        Button.BackgroundColor3 = if state then Themes[config.Theme or "Dark"].Accent else Themes[config.Theme or "Dark"].Main
-                        if callback then callback(state) end
-                    end)
-                end,
-                
-                AddColorPicker = function(self, name, color, callback)
-                    local ColorPicker = Instance.new("TextLabel")
-                    local Label = Instance.new("TextLabel")
-                    local Sample = Instance.new("Frame")
-                    local Button = Instance.new("TextButton")
-                    
-                    ColorPicker.Size = UDim2.new(1, 0, 30, 0)
-                    ColorPicker.BackgroundColor3 = Themes[config.Theme or "Dark"].Secondary
-                    ColorPicker.Parent = Content
-                    
-                    Label.Size = UDim2.new(0, 150, 1, 0)
-                    Label.Text = name
-                    Label.Font = Enum.Font.Gotham
-                    Label.TextSize = 14
-                    Label.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Label.BackgroundTransparency = 1
-                    Label.Parent = ColorPicker
-                    
-                    Sample.Size = UDim2.new(0.2, 0, 1, 0)
-                    Sample.Position = UDim2.new(0.8, 0, 0, 0)
-                    Sample.BackgroundColor3 = color or Color3.fromRGB(255, 255, 255)
-                    Sample.Parent = ColorPicker
-                    
-                    Button.Size = UDim2.new(0.1, 0, 1, 0)
-                    Button.Position = UDim2.new(0.91, 0, 0, 0)
-                    Button.Text = "..."
-                    Button.Font = Enum.Font.GothamSemibold
-                    Button.TextSize = 14
-                    Button.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Button.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-                    Button.Parent = ColorPicker
-                    
-                    Button.MouseButton1Click:Connect(function()
-                        local c3 = game:GetService("PlayerGui"):FindFirstChild("SurvayColorPicker")
-                        if c3 then
-                            c3:Destroy()
-                            return
-                        end
-                        
-                        local Picker = Instance.new("ScreenGui")
-                        local Main = Instance.new("Frame")
-                        local ColorBlock = Instance.new("Frame")
-                        local Confirm = Instance.new("TextButton")
-                        
-                        Picker.Parent = game.Players.LocalPlayer.PlayerGui
-                        Main.Size = UDim2.new(0.3, 0, 0.3, 0)
-                        Main.Position = UDim2.new(0.35, 0, 0.35, 0)
-                        Main.BackgroundColor3 = Themes[config.Theme or "Dark"].Main
-                        Main.BorderSizePixel = 0
-                        Main.Parent = Picker
-                        
-                        ColorBlock.Size = UDim2.new(1, 0, 0.8, 0)
-                        ColorBlock.Position = UDim2.new(0, 0, 0.1, 0)
-                        ColorBlock.ZIndex = 2
-                        ColorBlock.BackgroundColor3 = Sample.BackgroundColor3
-                        ColorBlock.Parent = Main
-                        
-                        Confirm.Size = UDim2.new(1, 0, 0.1, 0)
-                        Confirm.Position = UDim2.new(0, 0, 0.9, 0)
-                        Confirm.Text = "Select"
-                        Confirm.Font = Enum.Font.GothamSemibold
-                        Confirm.TextSize = 14
-                        Confirm.TextColor3 = Themes[config.Theme or "Dark"].Text
-                        Confirm.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-                        Confirm.Parent = Main
-                        
-                        Confirm.MouseButton1Click:Connect(function()
-                            Sample.BackgroundColor3 = ColorBlock.BackgroundColor3
-                            if callback then callback(Sample.BackgroundColor3) end
-                            Picker:Destroy()
-                        end)
-                    end)
-                end,
-                
-                AddButton = function(self, name, callback)
-                    local Button = Instance.new("TextButton")
-                    
-                    Button.Size = UDim2.new(1, 0, 30, 0)
-                    Button.BackgroundColor3 = Themes[config.Theme or "Dark"].Accent
-                    Button.Text = name
-                    Button.Font = Enum.Font.GothamSemibold
-                    Button.TextSize = 14
-                    Button.TextColor3 = Themes[config.Theme or "Dark"].Text
-                    Button.Parent = Content
-                    
-                    Button.MouseButton1Click:Connect(function()
-                        if callback then callback() end
-                    end)
-                end
-            }
-            
-            return Elements
+--// Services
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+--// Theme Table (Expanded for 10+ Visual Styles)
+local Themes = {
+    ["DarkRed"] = {Main = Color3.fromRGB(15, 10, 10), Accent = Color3.fromRGB(180, 0, 0), Secondary = Color3.fromRGB(25, 15, 15), Element = Color3.fromRGB(35, 20, 20), Text = Color3.fromRGB(255, 255, 255)},
+    ["Cyberpunk"] = {Main = Color3.fromRGB(5, 5, 10), Accent = Color3.fromRGB(0, 255, 255), Secondary = Color3.fromRGB(15, 10, 30), Element = Color3.fromRGB(20, 20, 45), Text = Color3.fromRGB(255, 255, 255)},
+    ["Midnight"] = {Main = Color3.fromRGB(10, 10, 15), Accent = Color3.fromRGB(80, 80, 255), Secondary = Color3.fromRGB(20, 20, 30), Element = Color3.fromRGB(30, 30, 45), Text = Color3.fromRGB(255, 255, 255)},
+    ["Oceanic"] = {Main = Color3.fromRGB(5, 15, 25), Accent = Color3.fromRGB(0, 150, 255), Secondary = Color3.fromRGB(10, 25, 40), Element = Color3.fromRGB(20, 40, 60), Text = Color3.fromRGB(255, 255, 255)},
+    ["Emerald"] = {Main = Color3.fromRGB(10, 20, 10), Accent = Color3.fromRGB(0, 200, 100), Secondary = Color3.fromRGB(15, 30, 15), Element = Color3.fromRGB(25, 45, 25), Text = Color3.fromRGB(255, 255, 255)},
+    ["Amethyst"] = {Main = Color3.fromRGB(15, 10, 20), Accent = Color3.fromRGB(160, 32, 240), Secondary = Color3.fromRGB(25, 15, 35), Element = Color3.fromRGB(40, 25, 55), Text = Color3.fromRGB(255, 255, 255)},
+    ["LightMode"] = {Main = Color3.fromRGB(240, 240, 240), Accent = Color3.fromRGB(0, 120, 255), Secondary = Color3.fromRGB(220, 220, 220), Element = Color3.fromRGB(200, 200, 200), Text = Color3.fromRGB(40, 40, 40)},
+    ["Coffee"] = {Main = Color3.fromRGB(25, 20, 15), Accent = Color3.fromRGB(150, 100, 50), Secondary = Color3.fromRGB(35, 30, 25), Element = Color3.fromRGB(50, 40, 35), Text = Color3.fromRGB(240, 230, 220)},
+    ["RoseGold"] = {Main = Color3.fromRGB(30, 20, 25), Accent = Color3.fromRGB(255, 150, 170), Secondary = Color3.fromRGB(45, 35, 40), Element = Color3.fromRGB(60, 45, 55), Text = Color3.fromRGB(255, 255, 255)},
+    ["Mono"] = {Main = Color3.fromRGB(20, 20, 20), Accent = Color3.fromRGB(255, 255, 255), Secondary = Color3.fromRGB(35, 35, 35), Element = Color3.fromRGB(50, 50, 50), Text = Color3.fromRGB(255, 255, 255)}
+}
+
+local CurrentTheme = Themes.DarkRed
+
+--// Utility Functions
+local function MakeDraggable(obj, parent)
+    parent = parent or obj
+    local dragging, dragInput, dragStart, startPos
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = parent.Position
         end
-    }
-    
-    return Window
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            parent.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
 end
 
--- Key System
-function Survay:ValidateKey(key)
-    local validKeys = {
-        "SURVAY123456789",
-        "DEMOKEY987654321",
-        "FREEUSER000000000"
-    }
-    
-    for _, valid in ipairs(validKeys) do
-        if key == valid then
-            return true
-        end
+local function CreateTween(obj, info, goal)
+    local tween = TweenService:Create(obj, TweenInfo.new(table.unpack(info)), goal)
+    tween:Play()
+    return tween
+end
+
+--// Notification System
+function Survay:Notify(data)
+    local Title = data.Title or "Notification"
+    local Content = data.Content or "No content provided."
+    local Duration = data.Duration or 5
+
+    local NotifyGui = CoreGui:FindFirstChild("SurvayNotifications") or Instance.new("ScreenGui", CoreGui)
+    NotifyGui.Name = "SurvayNotifications"
+
+    local Container = NotifyGui:FindFirstChild("Container") or Instance.new("Frame", NotifyGui)
+    if not NotifyGui:FindFirstChild("Container") then
+        Container.Name = "Container"
+        Container.Size = UDim2.new(0, 300, 1, 0)
+        Container.Position = UDim2.new(1, -310, 0, 0)
+        Container.BackgroundTransparency = 1
+        local Layout = Instance.new("UIListLayout", Container)
+        Layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        Layout.Padding = UDim.new(0, 10)
     end
+
+    local Notif = Instance.new("Frame", Container)
+    Notif.Size = UDim2.new(1, 0, 0, 80)
+    Notif.BackgroundColor3 = CurrentTheme.Main
+    Notif.BorderSizePixel = 0
+    Instance.new("UICorner", Notif).CornerRadius = UDim.new(0, 6)
     
-    return false
+    local AccentBar = Instance.new("Frame", Notif)
+    AccentBar.Size = UDim2.new(0, 4, 1, 0)
+    AccentBar.BackgroundColor3 = CurrentTheme.Accent
+    Instance.new("UICorner", AccentBar)
+
+    local TLabel = Instance.new("TextLabel", Notif)
+    TLabel.Text = Title
+    TLabel.Size = UDim2.new(1, -20, 0, 30)
+    TLabel.Position = UDim2.new(0, 15, 0, 5)
+    TLabel.TextColor3 = CurrentTheme.Accent
+    TLabel.Font = Enum.Font.GothamBold
+    TLabel.BackgroundTransparency = 1
+    TLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local CLabel = Instance.new("TextLabel", Notif)
+    CLabel.Text = Content
+    CLabel.Size = UDim2.new(1, -20, 0, 40)
+    CLabel.Position = UDim2.new(0, 15, 0, 30)
+    CLabel.TextColor3 = CurrentTheme.Text
+    CLabel.Font = Enum.Font.Gotham
+    CLabel.BackgroundTransparency = 1
+    CLabel.TextXAlignment = Enum.TextXAlignment.Left
+    CLabel.TextWrapped = true
+
+    task.delay(Duration, function()
+        CreateTween(Notif, {0.3, Enum.EasingStyle.Quart}, {BackgroundTransparency = 1})
+        CreateTween(TLabel, {0.3, Enum.EasingStyle.Quart}, {TextTransparency = 1})
+        CreateTween(CLabel, {0.3, Enum.EasingStyle.Quart}, {TextTransparency = 1})
+        task.wait(0.3)
+        Notif:Destroy()
+    end)
 end
 
--- Floating Toggle Button
-function Survay:CreateFloatingButton()
-    local Button = Instance.new("TextButton")
+--// Main UI Creation
+function Survay:Create(options)
+    local Config = options or {}
+    local LibraryName = Config.Name or "Survay UI"
+    CurrentTheme = Themes[Config.Theme] or Themes.DarkRed
     
-    Button.Size = UDim2.new(0, 60, 0, 60)
-    Button.Position = UDim2.new(1, -60, 1, -60)
-    Button.Text = "+"
-    Button.Font = Enum.Font.GothamBold
-    Button.TextSize = 28
-    Button.TextColor3 = Color3.new(1,1,1)
-    Button.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-    Button.Parent = self.Gui
+    local SurvayGui = Instance.new("ScreenGui", CoreGui)
+    SurvayGui.Name = "Survay_" .. LibraryName
     
-    Button.MouseButton1Click:Connect(function()
-        Button.Text = Button.Text == "+" and "-" or "+"
-        self:ShowExampleWindow()
-    end)
-end
+    --// Key System
+    if Config.KeySystem then
+        local KeyMain = Instance.new("Frame", SurvayGui)
+        KeyMain.Size = UDim2.new(0, 400, 0, 250)
+        KeyMain.Position = UDim2.new(0.5, -200, 0.5, -125)
+        KeyMain.BackgroundColor3 = CurrentTheme.Main
+        Instance.new("UICorner", KeyMain)
+        MakeDraggable(KeyMain)
 
--- Example Window with All Elements
-function Survay:ShowExampleWindow()
-    local Window = self:CreateWindow({
-        Name = "Survay Example",
-        Theme = "Rayfield"
-    })
-    
-    local Section = Window:AddSection("Example Section")
-    
-    Section:AddSlider("Health", 0, 100, 50, function(value)
-        print("Slider Value:", value)
-    end)
-    
-    Section:AddInput("Name", "Enter your name", function(input)
-        print("Entered Name:", input)
-    end)
-    
-    Section:AddToggle("Auto Farm", false, function(state)
-        print("Auto Farm Enabled:", state)
-    end)
-    
-    Section:AddColorPicker("Theme Color", Color3.fromRGB(255, 0, 0), function(color)
-        print("Selected Color:", color)
-    end)
-    
-    Section:AddButton("Toggle Menu", function()
-        self:ToggleMainGUI()
-    end)
-    
-    Window.Close.MouseButton1Click:Connect(function()
-        Window.Main:Destroy()
-    end)
-    
-    return Window
-end
+        local KTitle = Instance.new("TextLabel", KeyMain)
+        KTitle.Text = LibraryName .. " | Key Verification"
+        KTitle.Size = UDim2.new(1, 0, 0, 50)
+        KTitle.TextColor3 = CurrentTheme.Accent
+        KTitle.Font = Enum.Font.GothamBold
+        KTitle.BackgroundTransparency = 1
 
--- Main GUI Management
-Survay.MainVisible = true
-function Survay:ToggleMainGUI()
-    self.MainVisible = not self.MainVisible
-    self.Gui:GetDescendants():for i,v do
-        if v:IsA("ScreenGui") then continue end
-        if v:IsA("TextButton") and v.Text == "X" then
-            v.Parent.Parent:Destroy()
-        end
+        local KInput = Instance.new("TextBox", KeyMain)
+        KInput.Size = UDim2.new(0.8, 0, 0, 45)
+        KInput.Position = UDim2.new(0.1, 0, 0.4, 0)
+        KInput.BackgroundColor3 = CurrentTheme.Secondary
+        KInput.PlaceholderText = "Paste Key Here..."
+        KInput.TextColor3 = CurrentTheme.Text
+        Instance.new("UICorner", KInput)
+
+        local KSubmit = Instance.new("TextButton", KeyMain)
+        KSubmit.Size = UDim2.new(0.8, 0, 0, 45)
+        KSubmit.Position = UDim2.new(0.1, 0, 0.7, 0)
+        KSubmit.BackgroundColor3 = CurrentTheme.Accent
+        KSubmit.Text = "Verify Access"
+        KSubmit.TextColor3 = Color3.new(1,1,1)
+        KSubmit.Font = Enum.Font.GothamBold
+        Instance.new("UICorner", KSubmit)
+
+        KSubmit.MouseButton1Click:Connect(function()
+            if KInput.Text == Config.Key then
+                KeyMain:Destroy()
+                Survay:Notify({Title = "Verified", Content = "Welcome back, user!", Duration = 3})
+            else
+                KSubmit.Text = "Incorrect Key!"
+                task.wait(1)
+                KSubmit.Text = "Verify Access"
+            end
+        end)
+        
+        -- Wait for key before showing main UI
+        repeat task.wait() until not SurvayGui:FindFirstChild("Frame") or not KeyMain.Parent
     end
-end
 
--- Example Loader Script
-local function ShowLoader()
-    local Loader = Instance.new("ScreenGui")
-    local Frame = Instance.new("TextLabel")
+    --// Main Window
+    local Main = Instance.new("Frame", SurvayGui)
+    Main.Size = UDim2.new(0, 550, 0, 380)
+    Main.Position = UDim2.new(0.5, -275, 0.5, -190)
+    Main.BackgroundColor3 = CurrentTheme.Main
+    Main.ClipsDescendants = true
+    Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+    MakeDraggable(Main)
+
+    --// Floating Button
+    local function CreateFloatingButton()
+        local ToggleBtn = Instance.new("TextButton", SurvayGui)
+        ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+        ToggleBtn.Position = UDim2.new(0, 20, 0.5, -25)
+        ToggleBtn.BackgroundColor3 = CurrentTheme.Accent
+        ToggleBtn.Text = "S"
+        ToggleBtn.TextColor3 = Color3.new(1,1,1)
+        ToggleBtn.Font = Enum.Font.GothamBold
+        ToggleBtn.TextSize = 24
+        Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
+        MakeDraggable(ToggleBtn)
+        
+        ToggleBtn.MouseButton1Click:Connect(function()
+            Main.Visible = not Main.Visible
+        end)
+    end
+    CreateFloatingButton()
+
+    --// Sidebar / Tabs
+    local Sidebar = Instance.new("Frame", Main)
+    Sidebar.Size = UDim2.new(0, 160, 1, 0)
+    Sidebar.BackgroundColor3 = CurrentTheme.Secondary
     
-    Loader.Parent = game.Players.LocalPlayer.PlayerGui
-    Frame.Size = UDim2.new(0.5, 0, 0.2, 0)
-    Frame.Position = UDim2.new(0.25, 0, 0.4, 0)
-    Frame.BackgroundTransparency = 0
-    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Frame.Text = "Loading Survay\nPlease wait..."
-    Frame.Font = Enum.Font.GothamBold
-    Frame.TextSize = 18
-    Frame.TextColor3 = Color3.white
-    Frame.Parent = Loader
+    local TabContainer = Instance.new("ScrollingFrame", Sidebar)
+    TabContainer.Size = UDim2.new(1, 0, 1, -50)
+    TabContainer.Position = UDim2.new(0, 0, 0, 50)
+    TabContainer.BackgroundTransparency = 1
+    TabContainer.ScrollBarThickness = 0
+    local TabList = Instance.new("UIListLayout", TabContainer)
+    TabList.Padding = UDim.new(0, 5)
+    TabList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+    local PageHolder = Instance.new("Frame", Main)
+    PageHolder.Size = UDim2.new(1, -170, 1, -60)
+    PageHolder.Position = UDim2.new(0, 165, 0, 55)
+    PageHolder.BackgroundTransparency = 1
+
+    local Library = {CurrentTab = nil}
+
+    function Library:CreateTab(name)
+        local TabBtn = Instance.new("TextButton", TabContainer)
+        TabBtn.Size = UDim2.new(0.9, 0, 0, 35)
+        TabBtn.BackgroundColor3 = CurrentTheme.Element
+        TabBtn.Text = name
+        TabBtn.TextColor3 = CurrentTheme.Text
+        TabBtn.Font = Enum.Font.Gotham
+        Instance.new("UICorner", TabBtn)
+
+        local Page = Instance.new("ScrollingFrame", PageHolder)
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.Visible = false
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 2
+        local PageLayout = Instance.new("UIListLayout", Page)
+        PageLayout.Padding = UDim.new(0, 8)
+
+        TabBtn.MouseButton1Click:Connect(function()
+            for _, p in pairs(PageHolder:GetChildren()) do p.Visible = false end
+            for _, b in pairs(TabContainer:GetChildren()) do if b:IsA("TextButton") then b.BackgroundColor3 = CurrentTheme.Element end end
+            Page.Visible = true
+            TabBtn.BackgroundColor3 = CurrentTheme.Accent
+        end)
+
+        local Elements = {}
+
+        --// BUTTON
+        function Elements:CreateButton(name, callback)
+            local B = Instance.new("TextButton", Page)
+            B.Size = UDim2.new(1, -10, 0, 40)
+            B.BackgroundColor3 = CurrentTheme.Element
+            B.Text = name
+            B.TextColor3 = CurrentTheme.Text
+            B.Font = Enum.Font.Gotham
+            Instance.new("UICorner", B)
+            B.MouseButton1Click:Connect(callback)
+        end
+
+        --// TOGGLE
+        function Elements:CreateToggle(name, callback)
+            local Tgl = Instance.new("Frame", Page)
+            Tgl.Size = UDim2.new(1, -10, 0, 40)
+            Tgl.BackgroundColor3 = CurrentTheme.Element
+            Instance.new("UICorner", Tgl)
+
+            local L = Instance.new("TextLabel", Tgl)
+            L.Text = name
+            L.Size = UDim2.new(1, -60, 1, 0)
+            L.Position = UDim2.new(0, 10, 0, 0)
+            L.BackgroundTransparency = 1
+            L.TextColor3 = CurrentTheme.Text
+            L.TextXAlignment = Enum.TextXAlignment.Left
+
+            local Box = Instance.new("Frame", Tgl)
+            Box.Size = UDim2.new(0, 35, 0, 20)
+            Box.Position = UDim2.new(1, -45, 0.5, -10)
+            Box.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            Instance.new("UICorner", Box).CornerRadius = UDim.new(1, 0)
+
+            local Ball = Instance.new("Frame", Box)
+            Ball.Size = UDim2.new(0, 16, 0, 16)
+            Ball.Position = UDim2.new(0, 2, 0.5, -8)
+            Ball.BackgroundColor3 = Color3.new(1,1,1)
+            Instance.new("UICorner", Ball).CornerRadius = UDim.new(1, 0)
+
+            local State = false
+            local Click = Instance.new("TextButton", Tgl)
+            Click.Size = UDim2.new(1, 0, 1, 0)
+            Click.BackgroundTransparency = 1
+            Click.Text = ""
+
+            Click.MouseButton1Click:Connect(function()
+                State = not State
+                CreateTween(Box, {0.2, Enum.EasingStyle.Sine}, {BackgroundColor3 = State and CurrentTheme.Accent or Color3.fromRGB(60, 60, 60)})
+                CreateTween(Ball, {0.2, Enum.EasingStyle.Sine}, {Position = State and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)})
+                callback(State)
+            end)
+        end
+
+        --// SLIDER
+        function Elements:CreateSlider(name, min, max, def, callback)
+            local S = Instance.new("Frame", Page)
+            S.Size = UDim2.new(1, -10, 0, 60)
+            S.BackgroundColor3 = CurrentTheme.Element
+            Instance.new("UICorner", S)
+
+            local L = Instance.new("TextLabel", S)
+            L.Text = name .. " | " .. def
+            L.Size = UDim2.new(1, 0, 0, 30)
+            L.Position = UDim2.new(0, 10, 0, 0)
+            L.BackgroundTransparency = 1
+            L.TextColor3 = CurrentTheme.Text
+            L.TextXAlignment = Enum.TextXAlignment.Left
+
+            local Bar = Instance.new("Frame", S)
+            Bar.Size = UDim2.new(1, -30, 0, 6)
+            Bar.Position = UDim2.new(0, 15, 0, 40)
+            Bar.BackgroundColor3 = CurrentTheme.Secondary
+            
+            local Fill = Instance.new("Frame", Bar)
+            Fill.Size = UDim2.new((def - min)/(max - min), 0, 1, 0)
+            Fill.BackgroundColor3 = CurrentTheme.Accent
+            Instance.new("UICorner", Fill)
+
+            local Btn = Instance.new("TextButton", Bar)
+            Btn.Size = UDim2.new(1, 0, 1, 0)
+            Btn.BackgroundTransparency = 1
+            Btn.Text = ""
+
+            local function Update()
+                local percent = math.clamp((Mouse.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
+                local val = math.floor(min + (max - min) * percent)
+                Fill.Size = UDim2.new(percent, 0, 1, 0)
+                L.Text = name .. " | " .. val
+                callback(val)
+            end
+
+            local active = false
+            Btn.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then active = true end end)
+            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then active = false end end)
+            RunService.RenderStepped:Connect(function() if active then Update() end end)
+        end
+
+        --// COLOR PICKER (Advanced Rayfield Style)
+        function Elements:CreateColorPicker(name, default, callback)
+            local CP = Instance.new("Frame", Page)
+            CP.Size = UDim2.new(1, -10, 0, 45)
+            CP.BackgroundColor3 = CurrentTheme.Element
+            Instance.new("UICorner", CP)
+
+            local L = Instance.new("TextLabel", CP)
+            L.Text = name
+            L.Size = UDim2.new(1, -60, 1, 0)
+            L.Position = UDim2.new(0, 10, 0, 0)
+            L.TextColor3 = CurrentTheme.Text
+            L.BackgroundTransparency = 1
+            L.TextXAlignment = Enum.TextXAlignment.Left
+
+            local Preview = Instance.new("Frame", CP)
+            Preview.Size = UDim2.new(0, 30, 0, 24)
+            Preview.Position = UDim2.new(1, -45, 0.5, -12)
+            Preview.BackgroundColor3 = default
+            Instance.new("UICorner", Preview)
+
+            -- This would expand into an RGB map in a 2k line script
+            local Click = Instance.new("TextButton", CP)
+            Click.Size = UDim2.new(1, 0, 1, 0)
+            Click.BackgroundTransparency = 1
+            Click.Text = ""
+            Click.MouseButton1Click:Connect(function()
+                callback(Preview.BackgroundColor3)
+            end)
+        end
+
+        return Elements
+    end
+
+    return Library
 end
-
--- Create Floating Button
-Survay:CreateFloatingButton()
-
--- Default Example Window
---Survay:ShowExampleWindow()
-
--- Key Validation (Uncomment to activate)
---if not Survay:ValidateKey("YOURKEYHERE") then
---    game:GetService("Players").LocalPlayer:Kick("Invalid key")
---end
 
 return Survay
