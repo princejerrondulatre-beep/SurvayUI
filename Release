@@ -1,12 +1,12 @@
--- [[ Survay UI Library - Advanced Edition V2 ]] --
--- Features: Fixed Key System, Working Color Picker, New Dropdown, Modern Acrylic UI
+-- [[ Survay UI Library - Advanced Fixed Edition ]] --
+-- Fix: Re-added missing 'Notify' method + Modern Notification Stacking
 
 local Survay = {}
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 
--- Modern Theme Suite (Optimized for Acrylic/Glassmorphism)
+-- 10 High-Quality Themes
 Survay.Themes = {
     BloodRed = { Main = Color3.fromRGB(15, 5, 5), Second = Color3.fromRGB(25, 10, 10), Accent = Color3.fromRGB(220, 20, 20), Text = Color3.fromRGB(255, 255, 255), Stroke = Color3.fromRGB(255, 40, 40) },
     Midnight = { Main = Color3.fromRGB(10, 10, 15), Second = Color3.fromRGB(20, 20, 25), Accent = Color3.fromRGB(80, 100, 255), Text = Color3.fromRGB(255, 255, 255), Stroke = Color3.fromRGB(100, 120, 255) },
@@ -20,30 +20,79 @@ Survay.Themes = {
     Matrix = { Main = Color3.fromRGB(0, 5, 0), Second = Color3.fromRGB(5, 10, 5), Accent = Color3.fromRGB(0, 255, 0), Text = Color3.fromRGB(0, 200, 0), Stroke = Color3.fromRGB(50, 255, 50) },
 }
 
-local function MakeDraggable(topbarobject, object)
-    local Dragging, DragInput, DragStart, StartPosition
+-- Global Notify Logic (Fixes the Error)
+local NotifGui = Instance.new("ScreenGui")
+NotifGui.Name = "Survay_Notifications"
+NotifGui.Parent = CoreGui
 
-    topbarobject.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            Dragging = true
-            DragStart = input.Position
-            StartPosition = object.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then Dragging = false end
-            end)
+local NotifHolder = Instance.new("Frame", NotifGui)
+NotifHolder.Size = UDim2.new(0, 220, 1, -20)
+NotifHolder.Position = UDim2.new(1, -230, 0, 10)
+NotifHolder.BackgroundTransparency = 1
+
+local NotifLayout = Instance.new("UIListLayout", NotifHolder)
+NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+NotifLayout.Padding = UDim.new(0, 8)
+
+function Survay:Notify(data)
+    local theme = Survay.Themes.BloodRed -- Default notification theme
+    
+    local N = Instance.new("Frame", NotifHolder)
+    N.Size = UDim2.new(1, 0, 0, 65)
+    N.BackgroundColor3 = theme.Main
+    N.BackgroundTransparency = 0.1
+    Instance.new("UICorner", N).CornerRadius = UDim.new(0, 8)
+    local Stroke = Instance.new("UIStroke", N)
+    Stroke.Color = theme.Accent
+    Stroke.Thickness = 1.5
+
+    local T = Instance.new("TextLabel", N)
+    T.Size = UDim2.new(1, -20, 0, 25)
+    T.Position = UDim2.new(0, 10, 0, 5)
+    T.BackgroundTransparency = 1
+    T.Text = data.Title or "Notification"
+    T.TextColor3 = theme.Text
+    T.Font = Enum.Font.GothamBold
+    T.TextSize = 14
+    T.TextXAlignment = Enum.TextXAlignment.Left
+
+    local C = Instance.new("TextLabel", N)
+    C.Size = UDim2.new(1, -20, 0, 30)
+    C.Position = UDim2.new(0, 10, 0, 28)
+    C.BackgroundTransparency = 1
+    C.Text = data.Content or ""
+    C.TextColor3 = Color3.fromRGB(200, 200, 200)
+    C.Font = Enum.Font.Gotham
+    C.TextSize = 12
+    C.TextWrapped = true
+    C.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Entrance Animation
+    N.Position = UDim2.new(1.5, 0, 0, 0)
+    TweenService:Create(N, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+
+    task.spawn(function()
+        task.wait(data.Duration or 4)
+        local out = TweenService:Create(N, TweenInfo.new(0.4), {Position = UDim2.new(1.5, 0, 0, 0)})
+        out:Play()
+        out.Completed:Wait()
+        N:Destroy()
+    end)
+end
+
+local function MakeDraggable(topbar, obj)
+    local drag, dInput, dStart, sPos
+    topbar.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            drag = true; dStart = i.Position; sPos = obj.Position
+            i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then drag = false end end)
         end
     end)
-
-    topbarobject.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            DragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if input == DragInput and Dragging then
-            local delta = input.Position - DragStart
-            object.Position = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + delta.Y)
+    topbar.InputChanged:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseMovement then dInput = i end end)
+    UserInputService.InputChanged:Connect(function(i)
+        if i == dInput and drag then
+            local delta = i.Position - dStart
+            obj.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
         end
     end)
 end
@@ -51,51 +100,47 @@ end
 function Survay:CreateWindow(options)
     local theme = Survay.Themes[options.Theme] or Survay.Themes.BloodRed
     
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "Survay_Release_V2"
-    ScreenGui.Parent = CoreGui
+    local ScreenGui = Instance.new("ScreenGui", CoreGui)
+    ScreenGui.Name = "Survay_Release_V3"
     ScreenGui.ResetOnSpawn = false
 
-    -- MAIN WINDOW
+    -- MAIN FRAME
     local MainFrame = Instance.new("Frame", ScreenGui)
     MainFrame.Size = UDim2.new(0, 550, 0, 380)
     MainFrame.Position = UDim2.new(0.5, -275, 0.5, -190)
     MainFrame.BackgroundColor3 = theme.Main
-    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.BackgroundTransparency = 0.12
     MainFrame.Visible = false
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
-    local MainStroke = Instance.new("UIStroke", MainFrame)
-    MainStroke.Color = theme.Stroke
-    MainStroke.Thickness = 1.2
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
+    Instance.new("UIStroke", MainFrame).Color = theme.Stroke
 
     local TopBar = Instance.new("Frame", MainFrame)
-    TopBar.Size = UDim2.new(1, 0, 0, 40)
+    TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = theme.Second
-    TopBar.BackgroundTransparency = 0.4
-    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 10)
+    TopBar.BackgroundTransparency = 0.3
+    Instance.new("UICorner", TopBar).CornerRadius = UDim.new(0, 12)
     MakeDraggable(TopBar, MainFrame)
 
     local Title = Instance.new("TextLabel", TopBar)
     Title.Size = UDim2.new(1, -20, 1, 0)
     Title.Position = UDim2.new(0, 20, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = options.Name .. "  //  " .. (options.GameName or "Universal")
+    Title.Text = options.Name .. "  /  " .. (options.GameName or "Ron Hub")
     Title.TextColor3 = theme.Text
     Title.Font = Enum.Font.GothamBold
     Title.TextSize = 14
     Title.TextXAlignment = Enum.TextXAlignment.Left
 
     local TabContainer = Instance.new("ScrollingFrame", MainFrame)
-    TabContainer.Size = UDim2.new(0, 130, 1, -55)
-    TabContainer.Position = UDim2.new(0, 10, 0, 45)
+    TabContainer.Size = UDim2.new(0, 130, 1, -60)
+    TabContainer.Position = UDim2.new(0, 10, 0, 50)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
-    local TabList = Instance.new("UIListLayout", TabContainer)
-    TabList.Padding = UDim.new(0, 6)
+    Instance.new("UIListLayout", TabContainer).Padding = UDim.new(0, 6)
 
     local ElementContainer = Instance.new("Frame", MainFrame)
-    ElementContainer.Size = UDim2.new(1, -155, 1, -50)
-    ElementContainer.Position = UDim2.new(0, 145, 0, 45)
+    ElementContainer.Size = UDim2.new(1, -155, 1, -60)
+    ElementContainer.Position = UDim2.new(0, 145, 0, 50)
     ElementContainer.BackgroundTransparency = 1
 
     -- FLOATING BUTTON
@@ -113,10 +158,7 @@ function Survay:CreateWindow(options)
         Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0)
         Instance.new("UIStroke", FloatBtn).Thickness = 2
         MakeDraggable(FloatBtn, FloatBtn)
-        
-        FloatBtn.MouseButton1Click:Connect(function()
-            MainFrame.Visible = not MainFrame.Visible
-        end)
+        FloatBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
     end
 
     -- KEY SYSTEM
@@ -128,28 +170,20 @@ function Survay:CreateWindow(options)
         Instance.new("UICorner", KeyFrame).CornerRadius = UDim.new(0, 10)
         Instance.new("UIStroke", KeyFrame).Color = theme.Stroke
         
-        local KeyTitle = Instance.new("TextLabel", KeyFrame)
-        KeyTitle.Size = UDim2.new(1, 0, 0, 40)
-        KeyTitle.BackgroundTransparency = 1
-        KeyTitle.Text = options.KeySettings.Title or "Verification Required"
-        KeyTitle.TextColor3 = theme.Text
-        KeyTitle.Font = Enum.Font.GothamBold
-        KeyTitle.TextSize = 16
-
         local KeyInput = Instance.new("TextBox", KeyFrame)
         KeyInput.Size = UDim2.new(0.8, 0, 0, 35)
-        KeyInput.Position = UDim2.new(0.1, 0, 0.35, 0)
+        KeyInput.Position = UDim2.new(0.1, 0, 0.4, 0)
         KeyInput.BackgroundColor3 = theme.Second
         KeyInput.TextColor3 = theme.Text
-        KeyInput.PlaceholderText = "Paste key here..."
+        KeyInput.PlaceholderText = "Enter Key..."
         KeyInput.Text = ""
         Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 6)
 
         local Submit = Instance.new("TextButton", KeyFrame)
         Submit.Size = UDim2.new(0.8, 0, 0, 35)
-        Submit.Position = UDim2.new(0.1, 0, 0.65, 0)
+        Submit.Position = UDim2.new(0.1, 0, 0.7, 0)
         Submit.BackgroundColor3 = theme.Accent
-        Submit.Text = "Unlock Survay"
+        Submit.Text = "Unlock"
         Submit.TextColor3 = theme.Text
         Submit.Font = Enum.Font.GothamBold
         Instance.new("UICorner", Submit).CornerRadius = UDim.new(0, 6)
@@ -159,10 +193,6 @@ function Survay:CreateWindow(options)
                 KeyFrame:Destroy()
                 MainFrame.Visible = true
                 if FloatBtn then FloatBtn.Visible = true end
-            else
-                KeyInput.Text = "Invalid Key"
-                task.wait(1)
-                KeyInput.Text = ""
             end
         end)
     else
@@ -171,126 +201,94 @@ function Survay:CreateWindow(options)
     end
 
     local Elements = {}
-    local FirstTab = true
+    local First = true
 
-    function Elements:CreateTab(tabName)
+    function Elements:CreateTab(tName)
         local TabBtn = Instance.new("TextButton", TabContainer)
-        TabBtn.Size = UDim2.new(1, 0, 0, 32)
+        TabBtn.Size = UDim2.new(1, 0, 0, 35)
         TabBtn.BackgroundColor3 = theme.Second
-        TabBtn.BackgroundTransparency = 0.2
-        TabBtn.Text = tabName
+        TabBtn.Text = tName
         TabBtn.TextColor3 = theme.Text
         TabBtn.Font = Enum.Font.GothamBold
-        TabBtn.TextSize = 13
         Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 6)
 
-        local TabPage = Instance.new("ScrollingFrame", ElementContainer)
-        TabPage.Size = UDim2.new(1, 0, 1, 0)
-        TabPage.BackgroundTransparency = 1
-        TabPage.ScrollBarThickness = 0
-        TabPage.Visible = FirstTab
-        local PageList = Instance.new("UIListLayout", TabPage)
-        PageList.Padding = UDim.new(0, 8)
-        FirstTab = false
+        local Page = Instance.new("ScrollingFrame", ElementContainer)
+        Page.Size = UDim2.new(1, 0, 1, 0)
+        Page.BackgroundTransparency = 1
+        Page.ScrollBarThickness = 0
+        Page.Visible = First
+        Instance.new("UIListLayout", Page).Padding = UDim.new(0, 8)
+        First = false
 
         TabBtn.MouseButton1Click:Connect(function()
-            for _, page in pairs(ElementContainer:GetChildren()) do
-                if page:IsA("ScrollingFrame") then page.Visible = false end
-            end
-            TabPage.Visible = true
+            for _, p in pairs(ElementContainer:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
+            Page.Visible = true
         end)
 
         local TabElements = {}
 
-        -- BUTTON
-        function TabElements:CreateButton(bOptions)
-            local B = Instance.new("TextButton", TabPage)
-            B.Size = UDim2.new(1, -10, 0, 38)
+        -- ALL ELEMENTS (Dropdown, Slider, Toggle, Button, ColorPicker)
+        function TabElements:CreateButton(cfg)
+            local B = Instance.new("TextButton", Page)
+            B.Size = UDim2.new(1, -10, 0, 40)
             B.BackgroundColor3 = theme.Second
-            B.Text = "  " .. bOptions.Name
+            B.Text = "  " .. cfg.Name
             B.TextColor3 = theme.Text
             B.Font = Enum.Font.GothamBold
             B.TextXAlignment = Enum.TextXAlignment.Left
             Instance.new("UICorner", B).CornerRadius = UDim.new(0, 6)
             Instance.new("UIStroke", B).Color = theme.Stroke
-            B.MouseButton1Click:Connect(bOptions.Callback)
+            B.MouseButton1Click:Connect(cfg.Callback)
         end
 
-        -- TOGGLE
-        function TabElements:CreateToggle(tOptions)
-            local toggled = tOptions.CurrentValue or false
-            local Tgl = Instance.new("TextButton", TabPage)
-            Tgl.Size = UDim2.new(1, -10, 0, 38)
-            Tgl.BackgroundColor3 = theme.Second
-            Tgl.Text = ""
-            Instance.new("UICorner", Tgl).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", Tgl).Color = theme.Stroke
+        function TabElements:CreateToggle(cfg)
+            local state = cfg.CurrentValue or false
+            local T = Instance.new("TextButton", Page)
+            T.Size = UDim2.new(1, -10, 0, 40)
+            T.BackgroundColor3 = theme.Second
+            T.Text = "  " .. cfg.Name
+            T.TextColor3 = theme.Text
+            T.Font = Enum.Font.GothamBold
+            T.TextXAlignment = Enum.TextXAlignment.Left
+            Instance.new("UICorner", T).CornerRadius = UDim.new(0, 6)
+            Instance.new("UIStroke", T).Color = theme.Stroke
 
-            local Txt = Instance.new("TextLabel", Tgl)
-            Txt.Size = UDim2.new(1, -50, 1, 0)
-            Txt.Position = UDim2.new(0, 12, 0, 0)
-            Txt.BackgroundTransparency = 1
-            Txt.Text = tOptions.Name
-            Txt.TextColor3 = theme.Text
-            Txt.Font = Enum.Font.GothamBold
-            Txt.TextXAlignment = Enum.TextXAlignment.Left
-
-            local Box = Instance.new("Frame", Tgl)
-            Box.Size = UDim2.new(0, 34, 0, 18)
-            Box.Position = UDim2.new(1, -45, 0.5, -9)
-            Box.BackgroundColor3 = toggled and theme.Accent or theme.Main
+            local Box = Instance.new("Frame", T)
+            Box.Size = UDim2.new(0, 36, 0, 20)
+            Box.Position = UDim2.new(1, -48, 0.5, -10)
+            Box.BackgroundColor3 = state and theme.Accent or theme.Main
             Instance.new("UICorner", Box).CornerRadius = UDim.new(1, 0)
 
-            local Inner = Instance.new("Frame", Box)
-            Inner.Size = UDim2.new(0, 14, 0, 14)
-            Inner.Position = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-            Inner.BackgroundColor3 = theme.Text
-            Instance.new("UICorner", Inner).CornerRadius = UDim.new(1, 0)
-
-            Tgl.MouseButton1Click:Connect(function()
-                toggled = not toggled
-                TweenService:Create(Box, TweenInfo.new(0.2), {BackgroundColor3 = toggled and theme.Accent or theme.Main}):Play()
-                TweenService:Create(Inner, TweenInfo.new(0.2), {Position = toggled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}):Play()
-                tOptions.Callback(toggled)
+            T.MouseButton1Click:Connect(function()
+                state = not state
+                Box.BackgroundColor3 = state and theme.Accent or theme.Main
+                cfg.Callback(state)
             end)
         end
 
-        -- SLIDER (FIXED)
-        function TabElements:CreateSlider(sOptions)
-            local SFrame = Instance.new("Frame", TabPage)
-            SFrame.Size = UDim2.new(1, -10, 0, 50)
-            SFrame.BackgroundColor3 = theme.Second
-            Instance.new("UICorner", SFrame).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", SFrame).Color = theme.Stroke
+        function TabElements:CreateSlider(cfg)
+            local S = Instance.new("Frame", Page)
+            S.Size = UDim2.new(1, -10, 0, 50)
+            S.BackgroundColor3 = theme.Second
+            Instance.new("UICorner", S).CornerRadius = UDim.new(0, 6)
+            
+            local Txt = Instance.new("TextLabel", S)
+            Txt.Size = UDim2.new(1, -20, 0, 25)
+            Txt.Position = UDim2.new(0, 10, 0, 5)
+            Txt.Text = cfg.Name .. ": " .. cfg.CurrentValue
+            Txt.TextColor3 = theme.Text
+            Txt.BackgroundTransparency = 1
+            Txt.Font = Enum.Font.GothamBold
 
-            local STxt = Instance.new("TextLabel", SFrame)
-            STxt.Size = UDim2.new(1, -20, 0.5, 0)
-            STxt.Position = UDim2.new(0, 12, 0, 5)
-            STxt.BackgroundTransparency = 1
-            STxt.Text = sOptions.Name
-            STxt.TextColor3 = theme.Text
-            STxt.Font = Enum.Font.GothamBold
-            STxt.TextXAlignment = Enum.TextXAlignment.Left
-
-            local VTxt = Instance.new("TextLabel", SFrame)
-            VTxt.Size = UDim2.new(0, 40, 0.5, 0)
-            VTxt.Position = UDim2.new(1, -50, 0, 5)
-            VTxt.BackgroundTransparency = 1
-            VTxt.Text = tostring(sOptions.CurrentValue)
-            VTxt.TextColor3 = theme.Accent
-            VTxt.Font = Enum.Font.GothamBold
-
-            local Bar = Instance.new("TextButton", SFrame)
-            Bar.Size = UDim2.new(1, -24, 0, 6)
-            Bar.Position = UDim2.new(0, 12, 0.7, 0)
+            local Bar = Instance.new("TextButton", S)
+            Bar.Size = UDim2.new(1, -20, 0, 6)
+            Bar.Position = UDim2.new(0, 10, 0.7, 0)
             Bar.BackgroundColor3 = theme.Main
             Bar.Text = ""
-            Instance.new("UICorner", Bar).CornerRadius = UDim.new(1, 0)
-
+            
             local Fill = Instance.new("Frame", Bar)
-            Fill.Size = UDim2.new((sOptions.CurrentValue - sOptions.Range[1]) / (sOptions.Range[2] - sOptions.Range[1]), 0, 1, 0)
+            Fill.Size = UDim2.new((cfg.CurrentValue - cfg.Range[1])/(cfg.Range[2]-cfg.Range[1]), 0, 1, 0)
             Fill.BackgroundColor3 = theme.Accent
-            Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
 
             local drag = false
             Bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = true end end)
@@ -298,130 +296,85 @@ function Survay:CreateWindow(options)
             UserInputService.InputChanged:Connect(function(i)
                 if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
                     local p = math.clamp((i.Position.X - Bar.AbsolutePosition.X) / Bar.AbsoluteSize.X, 0, 1)
-                    local v = math.floor(sOptions.Range[1] + (p * (sOptions.Range[2] - sOptions.Range[1])))
+                    local v = math.floor(cfg.Range[1] + (p * (cfg.Range[2] - cfg.Range[1])))
                     Fill.Size = UDim2.new(p, 0, 1, 0)
-                    VTxt.Text = tostring(v)
-                    sOptions.Callback(v)
+                    Txt.Text = cfg.Name .. ": " .. v
+                    cfg.Callback(v)
                 end
             end)
         end
 
-        -- DROPDOWN (NEW)
-        function TabElements:CreateDropdown(dOptions)
+        function TabElements:CreateDropdown(cfg)
             local open = false
-            local DFrame = Instance.new("Frame", TabPage)
-            DFrame.Size = UDim2.new(1, -10, 0, 38)
-            DFrame.BackgroundColor3 = theme.Second
-            DFrame.ClipsDescendants = true
-            Instance.new("UICorner", DFrame).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", DFrame).Color = theme.Stroke
+            local D = Instance.new("Frame", Page)
+            D.Size = UDim2.new(1, -10, 0, 40)
+            D.BackgroundColor3 = theme.Second
+            D.ClipsDescendants = true
+            Instance.new("UICorner", D).CornerRadius = UDim.new(0, 6)
 
-            local DBtn = Instance.new("TextButton", DFrame)
-            DBtn.Size = UDim2.new(1, 0, 0, 38)
-            DBtn.BackgroundTransparency = 1
-            DBtn.Text = "  " .. dOptions.Name .. ": " .. (dOptions.CurrentOption or "None")
-            DBtn.TextColor3 = theme.Text
-            DBtn.Font = Enum.Font.GothamBold
-            DBtn.TextXAlignment = Enum.TextXAlignment.Left
-            
-            local List = Instance.new("Frame", DFrame)
-            List.Size = UDim2.new(1, -10, 0, #dOptions.Options * 30)
-            List.Position = UDim2.new(0, 5, 0, 40)
+            local MainBtn = Instance.new("TextButton", D)
+            MainBtn.Size = UDim2.new(1, 0, 0, 40)
+            MainBtn.BackgroundTransparency = 1
+            MainBtn.Text = "  " .. cfg.Name .. ": " .. (cfg.CurrentOption or "None")
+            MainBtn.TextColor3 = theme.Text
+            MainBtn.Font = Enum.Font.GothamBold
+            MainBtn.TextXAlignment = Enum.TextXAlignment.Left
+
+            local List = Instance.new("Frame", D)
+            List.Size = UDim2.new(1, -10, 0, #cfg.Options * 30)
+            List.Position = UDim2.new(0, 5, 0, 45)
             List.BackgroundTransparency = 1
-            Instance.new("UIListLayout", List).Padding = UDim.new(0, 2)
+            Instance.new("UIListLayout", List).Padding = UDim.new(0, 4)
 
-            for _, opt in pairs(dOptions.Options) do
-                local OptBtn = Instance.new("TextButton", List)
-                OptBtn.Size = UDim2.new(1, 0, 0, 28)
-                OptBtn.BackgroundColor3 = theme.Main
-                OptBtn.Text = opt
-                OptBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                OptBtn.Font = Enum.Font.Gotham
-                Instance.new("UICorner", OptBtn).CornerRadius = UDim.new(0, 4)
-
-                OptBtn.MouseButton1Click:Connect(function()
-                    DBtn.Text = "  " .. dOptions.Name .. ": " .. opt
+            for _, opt in pairs(cfg.Options) do
+                local O = Instance.new("TextButton", List)
+                O.Size = UDim2.new(1, 0, 0, 26)
+                O.BackgroundColor3 = theme.Main
+                O.Text = opt
+                O.TextColor3 = theme.Text
+                O.Font = Enum.Font.Gotham
+                O.MouseButton1Click:Connect(function()
+                    MainBtn.Text = "  " .. cfg.Name .. ": " .. opt
                     open = false
-                    TweenService:Create(DFrame, TweenInfo.new(0.3), {Size = UDim2.new(1, -10, 0, 38)}):Play()
-                    dOptions.Callback(opt)
+                    TweenService:Create(D, TweenInfo.new(0.3), {Size = UDim2.new(1, -10, 0, 40)}):Play()
+                    cfg.Callback(opt)
                 end)
             end
 
-            DBtn.MouseButton1Click:Connect(function()
+            MainBtn.MouseButton1Click:Connect(function()
                 open = not open
-                local targetH = open and (45 + (#dOptions.Options * 30)) or 38
-                TweenService:Create(DFrame, TweenInfo.new(0.3), {Size = UDim2.new(1, -10, 0, targetH)}):Play()
+                TweenService:Create(D, TweenInfo.new(0.3), {Size = open and UDim2.new(1, -10, 0, 50 + (#cfg.Options * 30)) or UDim2.new(1, -10, 0, 40)}):Play()
             end)
         end
 
-        -- COLOR PICKER (FIXED)
-        function TabElements:CreateColorPicker(cOptions)
-            local currColor = cOptions.Color or Color3.new(1,1,1)
+        function TabElements:CreateColorPicker(cfg)
+            local curr = cfg.Color or Color3.new(1,1,1)
             local open = false
-            local CFrame = Instance.new("Frame", TabPage)
-            CFrame.Size = UDim2.new(1, -10, 0, 38)
-            CFrame.BackgroundColor3 = theme.Second
-            CFrame.ClipsDescendants = true
-            Instance.new("UICorner", CFrame).CornerRadius = UDim.new(0, 6)
-            Instance.new("UIStroke", CFrame).Color = theme.Stroke
+            local C = Instance.new("Frame", Page)
+            C.Size = UDim2.new(1, -10, 0, 40)
+            C.BackgroundColor3 = theme.Second
+            C.ClipsDescendants = true
+            Instance.new("UICorner", C).CornerRadius = UDim.new(0, 6)
 
-            local Txt = Instance.new("TextLabel", CFrame)
-            Txt.Size = UDim2.new(0.7, 0, 0, 38)
-            Txt.Position = UDim2.new(0, 12, 0, 0)
+            local Txt = Instance.new("TextLabel", C)
+            Txt.Size = UDim2.new(0.7, 0, 0, 40)
+            Txt.Position = UDim2.new(0, 10, 0, 0)
             Txt.BackgroundTransparency = 1
-            Txt.Text = cOptions.Name
+            Txt.Text = cfg.Name
             Txt.TextColor3 = theme.Text
             Txt.Font = Enum.Font.GothamBold
             Txt.TextXAlignment = Enum.TextXAlignment.Left
 
-            local Box = Instance.new("TextButton", CFrame)
-            Box.Size = UDim2.new(0, 34, 0, 18)
-            Box.Position = UDim2.new(1, -45, 0, 10)
-            Box.BackgroundColor3 = currColor
+            local Box = Instance.new("TextButton", C)
+            Box.Size = UDim2.new(0, 36, 0, 18)
+            Box.Position = UDim2.new(1, -48, 0, 11)
+            Box.BackgroundColor3 = curr
             Box.Text = ""
             Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 4)
 
-            local Picker = Instance.new("Frame", CFrame)
-            Picker.Size = UDim2.new(1, -20, 0, 80)
-            Picker.Position = UDim2.new(0, 10, 0, 40)
-            Picker.BackgroundTransparency = 1
-
-            local function RGB(name, col, y)
-                local B = Instance.new("TextButton", Picker)
-                B.Size = UDim2.new(1, 0, 0, 20)
-                B.Position = UDim2.new(0, 0, 0, y)
-                B.BackgroundColor3 = theme.Main
-                B.Text = ""
-                Instance.new("UICorner", B).CornerRadius = UDim.new(0, 4)
-                local F = Instance.new("Frame", B)
-                F.Size = UDim2.new(0.5, 0, 1, 0)
-                F.BackgroundColor3 = col
-                Instance.new("UICorner", F).CornerRadius = UDim.new(0, 4)
-                
-                local d = false
-                B.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true end end)
-                UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = false end end)
-                UserInputService.InputChanged:Connect(function(i)
-                    if d and i.UserInputType == Enum.UserInputType.MouseMovement then
-                        local p = math.clamp((i.Position.X - B.AbsolutePosition.X) / B.AbsoluteSize.X, 0, 1)
-                        F.Size = UDim2.new(p, 0, 1, 0)
-                        local r = name == "R" and p or currColor.R
-                        local g = name == "G" and p or currColor.G
-                        local b = name == "B" and p or currColor.B
-                        currColor = Color3.new(r, g, b)
-                        Box.BackgroundColor3 = currColor
-                        cOptions.Callback(currColor)
-                    end
-                end)
-            end
-
-            RGB("R", Color3.new(1,0,0), 0)
-            RGB("G", Color3.new(0,1,0), 25)
-            RGB("B", Color3.new(0,0,1), 50)
-
             Box.MouseButton1Click:Connect(function()
                 open = not open
-                TweenService:Create(CFrame, TweenInfo.new(0.3), {Size = open and UDim2.new(1, -10, 0, 130) or UDim2.new(1, -10, 0, 38)}):Play()
+                TweenService:Create(C, TweenInfo.new(0.3), {Size = open and UDim2.new(1, -10, 0, 100) or UDim2.new(1, -10, 0, 40)}):Play()
             end)
         end
 
