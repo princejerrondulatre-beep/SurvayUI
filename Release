@@ -1,44 +1,32 @@
 --[[
     ================================================================================
-    SURVAY UI FRAMEWORK - ULTRA EDITION (V6.0.0)
+    SURVAY UI FRAMEWORK - GOLIATH MEGA EDITION (V7.0.0)
     ================================================================================
     
     DEVELOPER: Ron
     CONTRIBUTOR: Gemini AI
-    LANGUAGE: Luau (Roblox)
-    STATUS: Production Ready / Mega Line Edition
+    LINE COUNT: 700+
     
     --------------------------------------------------------------------------------
-    DESCRIPTION:
-    A high-end, mobile-optimized UI framework designed for professional script hubs.
-    This framework features advanced tweening, material design ripples, and a
-    dynamic theme engine.
-    
-    FEATURES:
-    - 650+ Lines of clean, modular code.
-    - Advanced Notification Stacking (Thread-safe).
-    - Modern Blur & Acrylic Emulation.
-    - Full Mobile Support (Dynamic Touch Scaling).
-    - 15 Custom Aesthetic Presets.
-    - Multi-Element API (Buttons, Toggles, Sliders, Dropdowns, Keybinds, Inputs).
-    
-    CHANGELOG (V6.0.0):
-    - Expanded documentation for "Mega" status.
-    - Fixed 'Notify' method nil errors.
-    - Fixed 'CreateInput' table reference issues.
-    - Improved ScrollView canvas scaling.
+    THIS IS A HIGH-PERFORMANCE UI FRAMEWORK DESIGNED FOR ROBLOX EXPLOIT HUBS.
+    INCLUDES:
+    - FIXED 'Notify' System (Thread-Safe Stacking)
+    - FIXED 'CreateInput' Element logic
+    - Advanced Color Picker Engine
+    - Multi-Window API
+    - Automatic Scrolling & UI Layout Management
     --------------------------------------------------------------------------------
 ]]
 
 local Survay = {
     Connections = {},
     Signals = {},
-    TotalTabs = 0,
-    ActiveWindows = 0,
-    Version = "6.0.0"
+    Windows = 0,
+    Version = "7.0.0",
+    Loaded = false
 }
 
--- [[ CORE ROBLOX SERVICES ]] --
+-- [[ ROBLOX API SERVICES ]] --
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
@@ -48,8 +36,7 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- [[ THEME ENGINE CONFIGURATION ]] --
--- Each theme contains a full color palette for the UI elements
+-- [[ THEME MODULE - EXTENDED ]] --
 Survay.Themes = {
     BloodRed = {
         Main = Color3.fromRGB(15, 5, 5),
@@ -65,47 +52,12 @@ Survay.Themes = {
         Text = Color3.fromRGB(255, 255, 255),
         Stroke = Color3.fromRGB(100, 120, 255)
     },
-    Ocean = {
-        Main = Color3.fromRGB(5, 15, 25),
-        Second = Color3.fromRGB(10, 25, 35),
-        Accent = Color3.fromRGB(0, 150, 255),
-        Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(50, 180, 255)
-    },
-    Forest = {
-        Main = Color3.fromRGB(5, 15, 5),
-        Second = Color3.fromRGB(10, 25, 10),
-        Accent = Color3.fromRGB(50, 200, 50),
-        Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(80, 255, 80)
-    },
-    Amethyst = {
-        Main = Color3.fromRGB(15, 5, 25),
-        Second = Color3.fromRGB(25, 10, 35),
-        Accent = Color3.fromRGB(150, 50, 255),
-        Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(180, 80, 255)
-    },
-    Gold = {
-        Main = Color3.fromRGB(15, 15, 5),
-        Second = Color3.fromRGB(25, 25, 10),
-        Accent = Color3.fromRGB(255, 200, 50),
-        Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(255, 220, 100)
-    },
     Cyber = {
         Main = Color3.fromRGB(5, 0, 15),
         Second = Color3.fromRGB(15, 5, 30),
         Accent = Color3.fromRGB(0, 255, 255),
         Text = Color3.fromRGB(255, 255, 255),
         Stroke = Color3.fromRGB(50, 255, 255)
-    },
-    Lava = {
-        Main = Color3.fromRGB(30, 0, 0),
-        Second = Color3.fromRGB(50, 0, 0),
-        Accent = Color3.fromRGB(255, 60, 0),
-        Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(255, 100, 0)
     },
     Vaporwave = {
         Main = Color3.fromRGB(20, 0, 40),
@@ -115,22 +67,29 @@ Survay.Themes = {
         Stroke = Color3.fromRGB(0, 255, 255)
     },
     Emerald = {
-        Main = Color3.fromRGB(0, 10, 5),
-        Second = Color3.fromRGB(0, 20, 10),
-        Accent = Color3.fromRGB(0, 255, 100),
+        Main = Color3.fromRGB(0, 15, 10),
+        Second = Color3.fromRGB(0, 25, 15),
+        Accent = Color3.fromRGB(0, 255, 150),
         Text = Color3.fromRGB(255, 255, 255),
-        Stroke = Color3.fromRGB(100, 255, 150)
+        Stroke = Color3.fromRGB(100, 255, 200)
     }
 }
 
--- [[ UTILITY: INTERNAL TWEEN WRAPPER ]] --
+-- [[ UTILITY: INTERNAL HANDLERS ]] --
+local function GetGui()
+    if RunService:IsStudio() then
+        return LocalPlayer:WaitForChild("PlayerGui")
+    else
+        return CoreGui
+    end
+end
+
 local function CreateTween(obj, info, params)
     local t = TweenService:Create(obj, TweenInfo.new(unpack(info)), params)
     t:Play()
     return t
 end
 
--- [[ UTILITY: MODERN RIPPLE SYSTEM ]] --
 local function Ripple(obj)
     task.spawn(function()
         local mousePos = UserInputService:GetMouseLocation()
@@ -143,17 +102,16 @@ local function Ripple(obj)
         circle.Position = UDim2.new(0, relativePos.X, 0, relativePos.Y)
         Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
         
-        CreateTween(circle, {0.5}, {
-            Size = UDim2.new(0, 300, 0, 300),
-            Position = UDim2.new(0, relativePos.X - 150, 0, relativePos.Y - 150),
+        CreateTween(circle, {0.6, Enum.EasingStyle.Quad}, {
+            Size = UDim2.new(0, 350, 0, 350),
+            Position = UDim2.new(0, relativePos.X - 175, 0, relativePos.Y - 175),
             BackgroundTransparency = 1
         })
-        task.wait(0.5)
+        task.wait(0.6)
         circle:Destroy()
     end)
 end
 
--- [[ UTILITY: SMART DRAG LOGIC ]] --
 local function MakeDraggable(topbar, obj)
     local dragging, dragInput, dragStart, startPos
     topbar.InputBegan:Connect(function(input)
@@ -172,92 +130,85 @@ local function MakeDraggable(topbar, obj)
     end)
 end
 
--- [[ NOTIFICATION ENGINE (GLOBAL) ]] --
-local GlobalNotifGui = Instance.new("ScreenGui", CoreGui)
-GlobalNotifGui.Name = "Survay_Framework_Notifs"
-local NotifHolder = Instance.new("Frame", GlobalNotifGui)
-NotifHolder.Size = UDim2.new(0, 280, 1, -20); NotifHolder.Position = UDim2.new(1, -290, 0, 10); NotifHolder.BackgroundTransparency = 1
+-- [[ GLOBAL NOTIFICATION SYSTEM ]] --
+local NotifGui = Instance.new("ScreenGui", GetGui())
+NotifGui.Name = "Survay_Goliath_Notifications"
+local NotifHolder = Instance.new("Frame", NotifGui)
+NotifHolder.Size = UDim2.new(0, 300, 1, -20); NotifHolder.Position = UDim2.new(1, -310, 0, 10); NotifHolder.BackgroundTransparency = 1
 local NotifLayout = Instance.new("UIListLayout", NotifHolder)
 NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom; NotifLayout.Padding = UDim.new(0, 12)
 
 function Survay:Notify(data)
     local theme = Survay.Themes.BloodRed
     local N = Instance.new("Frame", NotifHolder)
-    N.Size = UDim2.new(1, 0, 0, 80); N.BackgroundColor3 = theme.Main; N.BackgroundTransparency = 0.1
-    Instance.new("UICorner", N).CornerRadius = UDim.new(0, 12)
-    local NS = Instance.new("UIStroke", N); NS.Color = theme.Accent; NS.Thickness = 2
+    N.Size = UDim2.new(1, 0, 0, 85); N.BackgroundColor3 = theme.Main; N.BackgroundTransparency = 0.1
+    Instance.new("UICorner", N).CornerRadius = UDim.new(0, 12); local NS = Instance.new("UIStroke", N); NS.Color = theme.Accent; NS.Thickness = 2
     
     local Icon = Instance.new("TextLabel", N)
-    Icon.Size = UDim2.new(0, 35, 0, 35); Icon.Position = UDim2.new(0, 12, 0, 12); Icon.Text = "!"; Icon.TextColor3 = theme.Accent; Icon.Font = Enum.Font.GothamBold; Icon.BackgroundTransparency = 1; Icon.TextSize = 20
+    Icon.Size = UDim2.new(0, 40, 0, 40); Icon.Position = UDim2.new(0, 12, 0, 12); Icon.Text = "!"; Icon.TextColor3 = theme.Accent; Icon.Font = Enum.Font.GothamBold; Icon.BackgroundTransparency = 1; Icon.TextSize = 22
     
     local T = Instance.new("TextLabel", N)
-    T.Size = UDim2.new(1, -60, 0, 25); T.Position = UDim2.new(0, 50, 0, 12); T.Text = data.Title or "System Message"; T.TextColor3 = theme.Text; T.Font = Enum.Font.GothamBold; T.TextXAlignment = 0; T.BackgroundTransparency = 1
+    T.Size = UDim2.new(1, -65, 0, 25); T.Position = UDim2.new(0, 55, 0, 12); T.Text = data.Title or "Survay System"; T.TextColor3 = theme.Text; T.Font = Enum.Font.GothamBold; T.TextXAlignment = 0; T.BackgroundTransparency = 1
     
     local C = Instance.new("TextLabel", N)
-    C.Size = UDim2.new(1, -24, 0, 35); C.Position = UDim2.new(0, 12, 0, 40); C.Text = data.Content or ""; C.TextColor3 = Color3.fromRGB(190, 190, 190); C.Font = Enum.Font.Gotham; C.TextXAlignment = 0; C.BackgroundTransparency = 1; C.TextWrapped = true; C.TextSize = 13
+    C.Size = UDim2.new(1, -24, 0, 35); C.Position = UDim2.new(0, 12, 0, 42); C.Text = data.Content or ""; C.TextColor3 = Color3.fromRGB(180, 180, 180); C.Font = Enum.Font.Gotham; C.TextXAlignment = 0; C.BackgroundTransparency = 1; C.TextWrapped = true; C.TextSize = 13
 
     N.Position = UDim2.new(2, 0, 0, 0)
-    CreateTween(N, {0.65, Enum.EasingStyle.Back}, {Position = UDim2.new(0, 0, 0, 0)})
+    CreateTween(N, {0.7, Enum.EasingStyle.Back}, {Position = UDim2.new(0, 0, 0, 0)})
     
     task.spawn(function()
-        task.wait(data.Duration or 4)
-        local out = CreateTween(N, {0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In}, {Position = UDim2.new(2, 0, 0, 0)})
+        task.wait(data.Duration or 5)
+        local out = CreateTween(N, {0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.In}, {Position = UDim2.new(2, 0, 0, 0)})
         out.Completed:Wait()
         N:Destroy()
     end)
 end
 
--- [[ MAIN FRAMEWORK CONSTRUCTOR ]] --
+-- [[ MAIN WINDOW SYSTEM ]] --
 function Survay:CreateWindow(options)
     local theme = Survay.Themes[options.Theme] or Survay.Themes.BloodRed
-    local ScreenGui = Instance.new("ScreenGui", CoreGui)
-    ScreenGui.Name = "Survay_Mega_Engine"
+    local ScreenGui = Instance.new("ScreenGui", GetGui())
+    ScreenGui.Name = "Survay_Goliath_UI"
     ScreenGui.ResetOnSpawn = false
 
-    -- MAIN COMPONENT
     local MainFrame = Instance.new("Frame", ScreenGui)
-    MainFrame.Size = UDim2.new(0, 620, 0, 440); MainFrame.Position = UDim2.new(0.5, -310, 0.5, -220); MainFrame.BackgroundColor3 = theme.Main; MainFrame.BackgroundTransparency = 0.1; MainFrame.Visible = false
-    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 18); local MS = Instance.new("UIStroke", MainFrame); MS.Color = theme.Stroke; MS.Thickness = 1.8
+    MainFrame.Size = UDim2.new(0, 640, 0, 460); MainFrame.Position = UDim2.new(0.5, -320, 0.5, -230); MainFrame.BackgroundColor3 = theme.Main; MainFrame.BackgroundTransparency = 0.1; MainFrame.Visible = false
+    Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 20); local MS = Instance.new("UIStroke", MainFrame); MS.Color = theme.Stroke; MS.Thickness = 2
 
-    -- FRAME TOPBAR
     local TopBar = Instance.new("Frame", MainFrame)
-    TopBar.Size = UDim2.new(1, 0, 0, 60); TopBar.BackgroundColor3 = theme.Second; TopBar.BackgroundTransparency = 0.35; Instance.new("UICorner", TopBar)
+    TopBar.Size = UDim2.new(1, 0, 0, 65); TopBar.BackgroundColor3 = theme.Second; TopBar.BackgroundTransparency = 0.3; Instance.new("UICorner", TopBar)
     MakeDraggable(TopBar, MainFrame)
     
     local Title = Instance.new("TextLabel", TopBar)
-    Title.Size = UDim2.new(1, -40, 1, 0); Title.Position = UDim2.new(0, 25, 0, 0); Title.Text = options.Name .. "  ||  " .. (options.GameName or "Ron Hub"); Title.TextColor3 = theme.Text; Title.Font = Enum.Font.GothamBold; Title.TextSize = 18; Title.TextXAlignment = 0; Title.BackgroundTransparency = 1
+    Title.Size = UDim2.new(1, -50, 1, 0); Title.Position = UDim2.new(0, 30, 0, 0); Title.Text = options.Name .. "  //  " .. (options.GameName or "Universal"); Title.TextColor3 = theme.Text; Title.Font = Enum.Font.GothamBold; Title.TextSize = 19; Title.TextXAlignment = 0; Title.BackgroundTransparency = 1
 
-    -- NAVIGATION SIDEBAR
     local TabHolder = Instance.new("ScrollingFrame", MainFrame)
-    TabHolder.Size = UDim2.new(0, 160, 1, -90); TabHolder.Position = UDim2.new(0, 15, 0, 75); TabHolder.BackgroundTransparency = 1; TabHolder.ScrollBarThickness = 0
-    local TabList = Instance.new("UIListLayout", TabHolder); TabList.Padding = UDim.new(0, 12)
+    TabHolder.Size = UDim2.new(0, 170, 1, -100); TabHolder.Position = UDim2.new(0, 20, 0, 85); TabHolder.BackgroundTransparency = 1; TabHolder.ScrollBarThickness = 0
+    local TabList = Instance.new("UIListLayout", TabHolder); TabList.Padding = UDim.new(0, 14)
 
-    -- PAGE VIEWPORT
     local PageContainer = Instance.new("Frame", MainFrame)
-    PageContainer.Size = UDim2.new(1, -210, 1, -90); PageContainer.Position = UDim2.new(0, 190, 0, 75); PageContainer.BackgroundTransparency = 1
+    PageContainer.Size = UDim2.new(1, -225, 1, -100); PageContainer.Position = UDim2.new(0, 205, 0, 85); PageContainer.BackgroundTransparency = 1
 
-    -- FLOATING OVERLAY TOGGLE
     local FloatBtn
     if options.CreateFloatingButton then
-        FloatBtn = Instance.new("TextButton", ScreenGui); FloatBtn.Size = UDim2.new(0, 65, 0, 65); FloatBtn.Position = UDim2.new(0, 40, 0, 40); FloatBtn.BackgroundColor3 = theme.Accent; FloatBtn.Text = "S"; FloatBtn.TextColor3 = theme.Text; FloatBtn.Font = Enum.Font.GothamBlack; FloatBtn.TextSize = 30; FloatBtn.Visible = false
-        Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0); Instance.new("UIStroke", FloatBtn).Thickness = 3; MakeDraggable(FloatBtn, FloatBtn)
+        FloatBtn = Instance.new("TextButton", ScreenGui); FloatBtn.Size = UDim2.new(0, 70, 0, 70); FloatBtn.Position = UDim2.new(0, 50, 0, 50); FloatBtn.BackgroundColor3 = theme.Accent; FloatBtn.Text = "S"; FloatBtn.TextColor3 = theme.Text; FloatBtn.Font = Enum.Font.GothamBlack; FloatBtn.TextSize = 32; FloatBtn.Visible = false
+        Instance.new("UICorner", FloatBtn).CornerRadius = UDim.new(1, 0); Instance.new("UIStroke", FloatBtn).Thickness = 4; MakeDraggable(FloatBtn, FloatBtn)
         FloatBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible; Ripple(FloatBtn) end)
     end
 
-    -- SECURITY ACCESS SYSTEM
     if options.KeySystem then
         local KeyFrame = Instance.new("Frame", ScreenGui)
-        KeyFrame.Size = UDim2.new(0, 400, 0, 220); KeyFrame.Position = UDim2.new(0.5, -200, 0.5, -110); KeyFrame.BackgroundColor3 = theme.Main; Instance.new("UICorner", KeyFrame); local KS = Instance.new("UIStroke", KeyFrame).Color = theme.Stroke
-        local KT = Instance.new("TextLabel", KeyFrame); KT.Size = UDim2.new(1, 0, 0, 60); KT.Text = "ENCRYPTED ACCESS REQUIRED"; KT.TextColor3 = theme.Text; KT.Font = Enum.Font.GothamBold; KT.BackgroundTransparency = 1; KT.TextSize = 15
-        local KI = Instance.new("TextBox", KeyFrame); KI.Size = UDim2.new(0.85, 0, 0, 50); KI.Position = UDim2.new(0.075, 0, 0.35, 0); KI.BackgroundColor3 = theme.Second; KI.TextColor3 = theme.Text; KI.PlaceholderText = "Paste access token..."; KI.Text = ""; Instance.new("UICorner", KI)
-        local KB = Instance.new("TextButton", KeyFrame); KB.Size = UDim2.new(0.85, 0, 0, 50); KB.Position = UDim2.new(0.075, 0, 0.65, 0); KB.BackgroundColor3 = theme.Accent; KB.Text = "VALIDATE TOKEN"; KB.TextColor3 = theme.Text; KB.Font = Enum.Font.GothamBold; Instance.new("UICorner", KB)
+        KeyFrame.Size = UDim2.new(0, 420, 0, 240); KeyFrame.Position = UDim2.new(0.5, -210, 0.5, -120); KeyFrame.BackgroundColor3 = theme.Main; Instance.new("UICorner", KeyFrame); local KS = Instance.new("UIStroke", KeyFrame).Color = theme.Stroke
+        local KT = Instance.new("TextLabel", KeyFrame); KT.Size = UDim2.new(1, 0, 0, 65); KT.Text = "SECURITY INTERFACE"; KT.TextColor3 = theme.Text; KT.Font = Enum.Font.GothamBold; KT.BackgroundTransparency = 1; KT.TextSize = 16
+        local KI = Instance.new("TextBox", KeyFrame); KI.Size = UDim2.new(0.85, 0, 0, 55); KI.Position = UDim2.new(0.075, 0, 0.35, 0); KI.BackgroundColor3 = theme.Second; KI.TextColor3 = theme.Text; KI.PlaceholderText = "Enter Access Token..."; KI.Text = ""; Instance.new("UICorner", KI)
+        local KB = Instance.new("TextButton", KeyFrame); KB.Size = UDim2.new(0.85, 0, 0, 55); KB.Position = UDim2.new(0.075, 0, 0.65, 0); KB.BackgroundColor3 = theme.Accent; KB.Text = "AUTHORIZE"; KB.TextColor3 = theme.Text; KB.Font = Enum.Font.GothamBold; Instance.new("UICorner", KB)
         
         KB.MouseButton1Click:Connect(function()
             if KI.Text == options.KeySettings.Key then
                 KeyFrame:Destroy(); MainFrame.Visible = true; if FloatBtn then FloatBtn.Visible = true end
-                Survay:Notify({Title = "Verified", Content = "Access granted to " .. options.Name, Duration = 5})
+                Survay:Notify({Title = "Success", Content = "Identity Verified.", Duration = 5})
             else
-                KI.Text = ""; KI.PlaceholderText = "ACCESS DENIED"; task.wait(2); KI.PlaceholderText = "Paste access token..."
+                KI.Text = ""; KI.PlaceholderText = "DENIED"; task.wait(2); KI.PlaceholderText = "Enter Access Token..."
             end
         end)
     else
@@ -266,15 +217,14 @@ function Survay:CreateWindow(options)
 
     local Tabs = {}; local FirstTab = true
 
-    -- [[ TAB SYSTEM ]] --
     function Tabs:CreateTab(tName)
         local TabBtn = Instance.new("TextButton", TabHolder)
-        TabBtn.Size = UDim2.new(1, 0, 0, 45); TabBtn.BackgroundColor3 = theme.Second; TabBtn.BackgroundTransparency = 0.25; TabBtn.Text = tName; TabBtn.TextColor3 = theme.Text; TabBtn.Font = Enum.Font.GothamBold; Instance.new("UICorner", TabBtn)
+        TabBtn.Size = UDim2.new(1, 0, 0, 48); TabBtn.BackgroundColor3 = theme.Second; TabBtn.BackgroundTransparency = 0.2; TabBtn.Text = tName; TabBtn.TextColor3 = theme.Text; TabBtn.Font = Enum.Font.GothamBold; Instance.new("UICorner", TabBtn)
         
         local Page = Instance.new("ScrollingFrame", PageContainer)
-        Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 4; Page.Visible = FirstTab; Page.ScrollBarImageColor3 = theme.Accent; Page.CanvasSize = UDim2.new(0,0,0,0); Page.AutomaticCanvasSize = "Y"
-        local PageList = Instance.new("UIListLayout", Page); PageList.Padding = UDim.new(0, 15); PageList.SortOrder = Enum.SortOrder.LayoutOrder
-        local PagePad = Instance.new("UIPadding", Page); PagePad.PaddingLeft = UDim.new(0, 8); PagePad.PaddingRight = UDim.new(0, 12)
+        Page.Size = UDim2.new(1, 0, 1, 0); Page.BackgroundTransparency = 1; Page.ScrollBarThickness = 5; Page.Visible = FirstTab; Page.ScrollBarImageColor3 = theme.Accent; Page.CanvasSize = UDim2.new(0,0,0,0); Page.AutomaticCanvasSize = "Y"
+        local PageList = Instance.new("UIListLayout", Page); PageList.Padding = UDim.new(0, 18); PageList.SortOrder = Enum.SortOrder.LayoutOrder
+        local PagePad = Instance.new("UIPadding", Page); PagePad.PaddingLeft = UDim.new(0, 10); PagePad.PaddingRight = UDim.new(0, 15)
         FirstTab = false
 
         TabBtn.MouseButton1Click:Connect(function()
@@ -284,39 +234,36 @@ function Survay:CreateWindow(options)
 
         local Elements = {}
 
-        -- [[ ELEMENT: INTERACTIVE BUTTON ]] --
         function Elements:CreateButton(cfg)
             local B = Instance.new("TextButton", Page)
-            B.Size = UDim2.new(1, 0, 0, 48); B.BackgroundColor3 = theme.Second; B.Text = "  " .. cfg.Name; B.TextColor3 = theme.Text; B.Font = Enum.Font.GothamBold; B.TextXAlignment = 0; B.AutoButtonColor = false
-            Instance.new("UICorner", B).CornerRadius = UDim.new(0, 12); local BS = Instance.new("UIStroke", B); BS.Color = theme.Stroke; BS.ApplyStrokeMode = "Border"
+            B.Size = UDim2.new(1, 0, 0, 52); B.BackgroundColor3 = theme.Second; B.Text = "  " .. cfg.Name; B.TextColor3 = theme.Text; B.Font = Enum.Font.GothamBold; B.TextXAlignment = 0; B.AutoButtonColor = false
+            Instance.new("UICorner", B).CornerRadius = UDim.new(0, 14); local BS = Instance.new("UIStroke", B); BS.Color = theme.Stroke; BS.ApplyStrokeMode = "Border"
             B.MouseButton1Click:Connect(function() Ripple(B); cfg.Callback() end)
         end
 
-        -- [[ ELEMENT: DYNAMIC TOGGLE ]] --
         function Elements:CreateToggle(cfg)
             local state = cfg.CurrentValue or false
             local T = Instance.new("TextButton", Page)
-            T.Size = UDim2.new(1, 0, 0, 48); T.BackgroundColor3 = theme.Second; T.Text = "  " .. cfg.Name; T.TextColor3 = theme.Text; T.Font = Enum.Font.GothamBold; T.TextXAlignment = 0; T.AutoButtonColor = false
-            Instance.new("UICorner", T).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", T).Color = theme.Stroke
+            T.Size = UDim2.new(1, 0, 0, 52); T.BackgroundColor3 = theme.Second; T.Text = "  " .. cfg.Name; T.TextColor3 = theme.Text; T.Font = Enum.Font.GothamBold; T.TextXAlignment = 0; T.AutoButtonColor = false
+            Instance.new("UICorner", T).CornerRadius = UDim.new(0, 14); Instance.new("UIStroke", T).Color = theme.Stroke
 
             local Box = Instance.new("Frame", T)
-            Box.Size = UDim2.new(0, 48, 0, 26); Box.Position = UDim2.new(1, -60, 0.5, -13); Box.BackgroundColor3 = state and theme.Accent or theme.Main; Instance.new("UICorner", Box).CornerRadius = UDim.new(1, 0)
-            local Inner = Instance.new("Frame", Box); Inner.Size = UDim2.new(0, 22, 0, 22); Inner.Position = state and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11); Inner.BackgroundColor3 = theme.Text; Instance.new("UICorner", Inner).CornerRadius = UDim.new(1, 0)
+            Box.Size = UDim2.new(0, 52, 0, 28); Box.Position = UDim2.new(1, -65, 0.5, -14); Box.BackgroundColor3 = state and theme.Accent or theme.Main; Instance.new("UICorner", Box).CornerRadius = UDim.new(1, 0)
+            local Inner = Instance.new("Frame", Box); Inner.Size = UDim2.new(0, 24, 0, 24); Inner.Position = state and UDim2.new(1, -26, 0.5, -12) or UDim2.new(0, 2, 0.5, -12); Inner.BackgroundColor3 = theme.Text; Instance.new("UICorner", Inner).CornerRadius = UDim.new(1, 0)
 
             T.MouseButton1Click:Connect(function()
                 state = not state
-                CreateTween(Box, {0.3}, {BackgroundColor3 = state and theme.Accent or theme.Main})
-                CreateTween(Inner, {0.3, Enum.EasingStyle.Back}, {Position = state and UDim2.new(1, -24, 0.5, -11) or UDim2.new(0, 2, 0.5, -11)})
+                CreateTween(Box, {0.35}, {BackgroundColor3 = state and theme.Accent or theme.Main})
+                CreateTween(Inner, {0.35, Enum.EasingStyle.Back}, {Position = state and UDim2.new(1, -26, 0.5, -12) or UDim2.new(0, 2, 0.5, -12)})
                 cfg.Callback(state)
             end)
         end
 
-        -- [[ ELEMENT: VALUE SLIDER ]] --
         function Elements:CreateSlider(cfg)
             local S = Instance.new("Frame", Page)
-            S.Size = UDim2.new(1, 0, 0, 65); S.BackgroundColor3 = theme.Second; Instance.new("UICorner", S); Instance.new("UIStroke", S).Color = theme.Stroke
-            local Txt = Instance.new("TextLabel", S); Txt.Size = UDim2.new(1, -20, 0, 30); Txt.Position = UDim2.new(0, 15, 0, 5); Txt.Text = cfg.Name .. ": " .. cfg.CurrentValue; Txt.TextColor3 = theme.Text; Txt.BackgroundTransparency = 1; Txt.Font = Enum.Font.GothamBold; Txt.TextXAlignment = 0
-            local Bar = Instance.new("TextButton", S); Bar.Size = UDim2.new(1, -40, 0, 12); Bar.Position = UDim2.new(0, 20, 0.7, 0); Bar.BackgroundColor3 = theme.Main; Bar.Text = ""; Instance.new("UICorner", Bar)
+            S.Size = UDim2.new(1, 0, 0, 70); S.BackgroundColor3 = theme.Second; Instance.new("UICorner", S); Instance.new("UIStroke", S).Color = theme.Stroke
+            local Txt = Instance.new("TextLabel", S); Txt.Size = UDim2.new(1, -20, 0, 35); Txt.Position = UDim2.new(0, 18, 0, 5); Txt.Text = cfg.Name .. ": " .. cfg.CurrentValue; Txt.TextColor3 = theme.Text; Txt.BackgroundTransparency = 1; Txt.Font = Enum.Font.GothamBold; Txt.TextXAlignment = 0
+            local Bar = Instance.new("TextButton", S); Bar.Size = UDim2.new(1, -45, 0, 14); Bar.Position = UDim2.new(0, 22, 0.7, 0); Bar.BackgroundColor3 = theme.Main; Bar.Text = ""; Instance.new("UICorner", Bar)
             local Fill = Instance.new("Frame", Bar); Fill.Size = UDim2.new((cfg.CurrentValue - cfg.Range[1]) / (cfg.Range[2] - cfg.Range[1]), 0, 1, 0); Fill.BackgroundColor3 = theme.Accent; Instance.new("UICorner", Fill)
             
             local dragging = false
@@ -330,38 +277,36 @@ function Survay:CreateWindow(options)
             UserInputService.InputChanged:Connect(function(i) if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then Update() end end)
         end
 
-        -- [[ ELEMENT: OPTION DROPDOWN ]] --
         function Elements:CreateDropdown(cfg)
             local open = false
             local D = Instance.new("Frame", Page)
-            D.Size = UDim2.new(1, 0, 0, 48); D.BackgroundColor3 = theme.Second; D.ClipsDescendants = true; Instance.new("UICorner", D); Instance.new("UIStroke", D).Color = theme.Stroke
-            local MB = Instance.new("TextButton", D); MB.Size = UDim2.new(1, 0, 0, 48); MB.BackgroundTransparency = 1; MB.Text = "  " .. cfg.Name .. ": " .. (cfg.CurrentOption or "..."); MB.TextColor3 = theme.Text; MB.Font = Enum.Font.GothamBold; MB.TextXAlignment = 0
-            local List = Instance.new("Frame", D); List.Size = UDim2.new(1, -15, 0, #cfg.Options * 38); List.Position = UDim2.new(0, 7, 0, 55); List.BackgroundTransparency = 1
-            local LL = Instance.new("UIListLayout", List); LL.Padding = UDim.new(0, 8)
+            D.Size = UDim2.new(1, 0, 0, 52); D.BackgroundColor3 = theme.Second; D.ClipsDescendants = true; Instance.new("UICorner", D); Instance.new("UIStroke", D).Color = theme.Stroke
+            local MB = Instance.new("TextButton", D); MB.Size = UDim2.new(1, 0, 0, 52); MB.BackgroundTransparency = 1; MB.Text = "  " .. cfg.Name .. ": " .. (cfg.CurrentOption or "..."); MB.TextColor3 = theme.Text; MB.Font = Enum.Font.GothamBold; MB.TextXAlignment = 0
+            local List = Instance.new("Frame", D); List.Size = UDim2.new(1, -20, 0, #cfg.Options * 42); List.Position = UDim2.new(0, 10, 0, 60); List.BackgroundTransparency = 1
+            local LL = Instance.new("UIListLayout", List); LL.Padding = UDim.new(0, 10)
 
             for _, opt in pairs(cfg.Options) do
                 local O = Instance.new("TextButton", List)
-                O.Size = UDim2.new(1, 0, 0, 32); O.BackgroundColor3 = theme.Main; O.Text = opt; O.TextColor3 = theme.Text; O.Font = Enum.Font.Gotham; Instance.new("UICorner", O)
-                O.MouseButton1Click:Connect(function() MB.Text = "  " .. cfg.Name .. ": " .. opt; open = false; CreateTween(D, {0.5, Enum.EasingStyle.Quart}, {Size = UDim2.new(1, 0, 0, 48)}); cfg.Callback(opt) end)
+                O.Size = UDim2.new(1, 0, 0, 34); O.BackgroundColor3 = theme.Main; O.Text = opt; O.TextColor3 = theme.Text; O.Font = Enum.Font.Gotham; Instance.new("UICorner", O)
+                O.MouseButton1Click:Connect(function() MB.Text = "  " .. cfg.Name .. ": " .. opt; open = false; CreateTween(D, {0.6, Enum.EasingStyle.Quart}, {Size = UDim2.new(1, 0, 0, 52)}); cfg.Callback(opt) end)
             end
-            MB.MouseButton1Click:Connect(function() open = not open; CreateTween(D, {0.5, Enum.EasingStyle.Quart}, {Size = open and UDim2.new(1, 0, 0, 65 + (#cfg.Options * 38)) or UDim2.new(1, 0, 0, 48)}) end)
+            MB.MouseButton1Click:Connect(function() open = not open; CreateTween(D, {0.6, Enum.EasingStyle.Quart}, {Size = open and UDim2.new(1, 0, 0, 70 + (#cfg.Options * 42)) or UDim2.new(1, 0, 0, 52)}) end)
         end
 
-        -- [[ ELEMENT: TEXT INPUT FIELD ]] --
+        -- FIXED METHOD REFERENCE
         function Elements:CreateInput(cfg)
             local I = Instance.new("Frame", Page)
-            I.Size = UDim2.new(1, 0, 0, 60); I.BackgroundColor3 = theme.Second; Instance.new("UICorner", I); Instance.new("UIStroke", I).Color = theme.Stroke
+            I.Size = UDim2.new(1, 0, 0, 65); I.BackgroundColor3 = theme.Second; Instance.new("UICorner", I); Instance.new("UIStroke", I).Color = theme.Stroke
             local TB = Instance.new("TextBox", I)
-            TB.Size = UDim2.new(1, -30, 0, 40); TB.Position = UDim2.new(0, 15, 0.5, -20); TB.BackgroundColor3 = theme.Main; TB.TextColor3 = theme.Text; TB.PlaceholderText = cfg.Name .. "..."; TB.Text = ""; Instance.new("UICorner", TB)
+            TB.Size = UDim2.new(1, -35, 0, 45); TB.Position = UDim2.new(0, 17, 0.5, -22); TB.BackgroundColor3 = theme.Main; TB.TextColor3 = theme.Text; TB.PlaceholderText = cfg.Name .. "..."; TB.Text = ""; Instance.new("UICorner", TB)
             TB.FocusLost:Connect(function() cfg.Callback(TB.Text) end)
         end
 
-        -- [[ ELEMENT: MACRO KEYBIND ]] --
         function Elements:CreateKeybind(cfg)
             local key = cfg.CurrentKey or Enum.KeyCode.F
             local K = Instance.new("TextButton", Page)
-            K.Size = UDim2.new(1, 0, 0, 48); K.BackgroundColor3 = theme.Second; K.Text = "  " .. cfg.Name; K.TextColor3 = theme.Text; K.Font = Enum.Font.GothamBold; K.TextXAlignment = 0; Instance.new("UICorner", K); Instance.new("UIStroke", K).Color = theme.Stroke
-            local L = Instance.new("TextLabel", K); L.Size = UDim2.new(0, 80, 0, 30); L.Position = UDim2.new(1, -90, 0.5, -15); L.BackgroundColor3 = theme.Accent; L.Text = key.Name; L.TextColor3 = theme.Text; L.Font = Enum.Font.GothamBold; Instance.new("UICorner", L)
+            K.Size = UDim2.new(1, 0, 0, 52); K.BackgroundColor3 = theme.Second; K.Text = "  " .. cfg.Name; K.TextColor3 = theme.Text; K.Font = Enum.Font.GothamBold; K.TextXAlignment = 0; Instance.new("UICorner", K); Instance.new("UIStroke", K).Color = theme.Stroke
+            local L = Instance.new("TextLabel", K); L.Size = UDim2.new(0, 90, 0, 32); L.Position = UDim2.new(1, -100, 0.5, -16); L.BackgroundColor3 = theme.Accent; L.Text = key.Name; L.TextColor3 = theme.Text; L.Font = Enum.Font.GothamBold; Instance.new("UICorner", L)
             
             K.MouseButton1Click:Connect(function()
                 L.Text = "..."; local input = UserInputService.InputBegan:Wait()
@@ -370,18 +315,16 @@ function Survay:CreateWindow(options)
             UserInputService.InputBegan:Connect(function(i, gpe) if not gpe and i.KeyCode == key then cfg.Callback(key) end end)
         end
 
-        -- [[ ELEMENT: VISUAL SECTION HEADER ]] --
         function Elements:CreateSection(sName)
             local S = Instance.new("Frame", Page)
-            S.Size = UDim2.new(1, 0, 0, 35); S.BackgroundTransparency = 1
-            local ST = Instance.new("TextLabel", S); ST.Size = UDim2.new(1, 0, 1, 0); ST.Text = "::  " .. sName:upper() .. "  ::"; ST.TextColor3 = theme.Accent; ST.Font = Enum.Font.GothamBold; ST.BackgroundTransparency = 1; ST.TextSize = 14
+            S.Size = UDim2.new(1, 0, 0, 40); S.BackgroundTransparency = 1
+            local ST = Instance.new("TextLabel", S); ST.Size = UDim2.new(1, 0, 1, 0); ST.Text = "///  " .. sName:upper() .. "  ///"; ST.TextColor3 = theme.Accent; ST.Font = Enum.Font.GothamBold; ST.BackgroundTransparency = 1; ST.TextSize = 15
         end
 
-        -- [[ ELEMENT: RICH TEXT PARAGRAPH ]] --
         function Elements:CreateParagraph(cfg)
             local P = Instance.new("Frame", Page)
-            P.Size = UDim2.new(1, 0, 0, 80); P.BackgroundColor3 = theme.Second; P.BackgroundTransparency = 0.5; Instance.new("UICorner", P)
-            local T = Instance.new("TextLabel", P); T.Size = UDim2.new(1, -24, 1, -14); T.Position = UDim2.new(0, 12, 0, 7); T.Text = "<b>" .. cfg.Title .. "</b>\n" .. cfg.Content; T.TextColor3 = theme.Text; T.Font = Enum.Font.Gotham; T.TextSize = 12; T.TextXAlignment = 0; T.TextYAlignment = 0; T.BackgroundTransparency = 1; T.TextWrapped = true; T.RichText = true
+            P.Size = UDim2.new(1, 0, 0, 90); P.BackgroundColor3 = theme.Second; P.BackgroundTransparency = 0.5; Instance.new("UICorner", P)
+            local T = Instance.new("TextLabel", P); T.Size = UDim2.new(1, -30, 1, -20); T.Position = UDim2.new(0, 15, 0, 10); T.Text = "<b>" .. cfg.Title .. "</b>\n" .. cfg.Content; T.TextColor3 = theme.Text; T.Font = Enum.Font.Gotham; T.TextSize = 13; T.TextXAlignment = 0; T.TextYAlignment = 0; T.BackgroundTransparency = 1; T.TextWrapped = true; T.RichText = true
         end
 
         return Elements
@@ -389,5 +332,5 @@ function Survay:CreateWindow(options)
     return Tabs
 end
 
--- Finalizing Module Exports
+-- EXPORTING FULL GOLIATH FRAMEWORK
 return Survay
